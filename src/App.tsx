@@ -95,25 +95,7 @@ const getPrizeIcon = (prizeName: string) => {
   return Gift;
 };
 
-// Get appropriate icon for goal/behavior name
-const getGoalIcon = (goalName: string) => {
-  if (!goalName) return 'star';
-  const name = goalName.toLowerCase();
 
-  // Activity-based icons
-  if (name.includes('clean') || name.includes('tidy') || name.includes('organize')) return 'sparkles';
-  if (name.includes('homework') || name.includes('read') || name.includes('study') || name.includes('book')) return 'star';
-  if (name.includes('help') || name.includes('kind') || name.includes('share')) return 'heart';
-  if (name.includes('eat') || name.includes('meal') || name.includes('vegeta') || name.includes('food')) return 'utensils';
-  if (name.includes('brush') || name.includes('teeth') || name.includes('bath') || name.includes('shower')) return 'smile';
-  if (name.includes('bed') || name.includes('sleep') || name.includes('nap')) return 'moon';
-  if (name.includes('exercise') || name.includes('play') || name.includes('active') || name.includes('run')) return 'zap';
-  if (name.includes('practice') || name.includes('lesson') || name.includes('learn')) return 'trophy';
-  if (name.includes('chore') || name.includes('task') || name.includes('job')) return 'award';
-
-  // Default
-  return 'star';
-};
 
 // --- 3D ICON WRAPPER ---
 const PremiumIcon = ({ Icon, size = 24, className = "", colorMain = "text-white", colorShadow = "text-black/20" }: any) => (
@@ -642,7 +624,7 @@ const SurpriseEggModal = ({ onClose, onWin, prizes, settings }: any) => {
   );
 };
 
-const VoucherModal = ({ prize, onClose }: any) => null; // Disabled - prize is shown in wheel result
+// Disabled - prize is shown in wheel result
 
 const GrandCelebrationOverlay = ({ visible, prizeName, onClose, onReset, settings }: any) => {
   const [stage, setStage] = useState<'intro' | 'charging' | 'exploded' | 'revealed'>('intro');
@@ -950,7 +932,7 @@ export default function App() {
 
   // UI State
   const [showWheel, setShowWheel] = useState(false);
-  const [voucher, setVoucher] = useState<string | null>(null);
+
   const [feedback, setFeedback] = useState<any>({ visible: false });
   const [showConfetti, setShowConfetti] = useState(false);
   const [showGrandCelebration, setShowGrandCelebration] = useState(false);
@@ -1275,12 +1257,12 @@ export default function App() {
           onWin={(prize: string) => {
             // Optional: Add logic if needed when prize is won
             console.log('Won:', prize);
-            setVoucher(prize); // Assuming prize is the voucher content
+
             setShowWheel(false);
           }}
         />
       )}
-      {voucher && <VoucherModal prize={voucher} onClose={() => setVoucher(null)} />}
+
       <FeedbackPopup {...feedback} />
 
       <header className="bg-transparent p-6 flex justify-between items-center relative z-10">
@@ -1525,7 +1507,7 @@ export default function App() {
               </div>
 
               <div className="flex gap-3 pt-4">
-                {editingId && <button onClick={deleteBehavior} className="flex-1 py-4 bg-red-500/10 hover:bg-red-500/20 text-red-400 font-bold rounded-xl border border-red-500/20 transition-all">Delete</button>}
+                {editingId && <button onClick={() => deleteBehavior()} className="flex-1 py-4 bg-red-500/10 hover:bg-red-500/20 text-red-400 font-bold rounded-xl border border-red-500/20 transition-all">Delete</button>}
                 <button onClick={saveBehavior} className="flex-[2] py-4 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl shadow-lg active:scale-95 transition-all">Save Mission</button>
               </div>
             </div>
