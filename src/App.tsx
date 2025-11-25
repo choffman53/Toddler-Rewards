@@ -135,9 +135,9 @@ const NextPrizeCard = ({ totalRewards, settings }: any) => {
   const [randomImage, setRandomImage] = useState('');
 
   useEffect(() => {
-    // Randomize image on mount (page refresh)
+    // Randomize image on mount (page refresh) or when featured prize changes
     setRandomImage(`/prize-${Math.floor(Math.random() * 8) + 1}.jpg`);
-  }, []);
+  }, [settings.featuredPrizeId]);
 
   // Determine background image - use random image for hero
   const heroStyle = {
@@ -218,16 +218,12 @@ const GiftBoxSection = ({ prizes, totalRewards, onClaimPrize, onFeature, feature
           return (
             <div
               key={p.id}
-              onClick={() => isMet && onClaimPrize && onClaimPrize(p)}
-              className={`snap-center relative flex-shrink-0 w-40 h-52 rounded-[2rem] ${gradient} p-4 flex flex-col justify-between shadow-lg transition-all overflow-hidden ${isMet
-                ? 'cursor-pointer hover:scale-110 animate-pulse shadow-[0_0_30px_rgba(251,191,36,0.8)] border-4 border-yellow-300'
+              className={`snap-center relative flex-shrink-0 w-40 h-52 group transition-all ${isMet
+                ? 'cursor-pointer hover:scale-110'
                 : 'hover:scale-105'
-                } group`}
+                }`}
             >
-              {/* Background Pattern */}
-              <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/diagonal-stripes-transparent.png')] opacity-10 mix-blend-overlay"></div>
-
-              {/* Feature Pin Button */}
+              {/* Feature Pin Button - Outside overflow hidden */}
               <button
                 onClick={(e) => { e.stopPropagation(); onFeature && onFeature(p.id); }}
                 className={`absolute -top-3 -right-3 z-30 p-1.5 rounded-full shadow-xl transition-all border-2 border-white ${featuredId === p.id ? 'bg-blue-500 text-white scale-110' : 'bg-slate-700 text-slate-400 hover:bg-slate-600 hover:text-white'}`}
@@ -236,44 +232,52 @@ const GiftBoxSection = ({ prizes, totalRewards, onClaimPrize, onFeature, feature
                 <Pin size={14} fill={featuredId === p.id ? "currentColor" : "none"} />
               </button>
 
-              <div className="relative z-10 flex justify-between items-start">
-                <span className="bg-white/20 backdrop-blur-md px-2 py-1 rounded-lg text-[10px] font-bold text-white border border-white/20">
-                  {p.goal} Points
-                </span>
-                {isMet ? (
-                  <div className="bg-yellow-400 text-slate-900 rounded-full p-1.5 shadow-lg animate-bounce">
-                    <Trophy size={12} fill="currentColor" strokeWidth={0} />
-                  </div>
-                ) : (
-                  <div className="bg-white rounded-full p-1 shadow-sm">
-                    <Star size={10} className="text-yellow-400" fill="currentColor" />
-                  </div>
-                )}
-              </div>
+              <div
+                onClick={() => isMet && onClaimPrize && onClaimPrize(p)}
+                className={`w-full h-full rounded-[2rem] ${gradient} p-4 flex flex-col justify-between shadow-lg overflow-hidden ${isMet ? 'animate-pulse shadow-[0_0_30px_rgba(251,191,36,0.8)] border-4 border-yellow-300' : ''}`}
+              >
+                {/* Background Pattern */}
+                <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/diagonal-stripes-transparent.png')] opacity-10 mix-blend-overlay"></div>
 
-              <div className="relative z-10 flex-1 flex items-center justify-center my-2">
-                {isMet && (
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="absolute inset-0 bg-yellow-300/30 rounded-2xl animate-pulse"></div>
-                  </div>
-                )}
-                <PremiumIcon Icon={getPrizeIcon(p.name)} size={48} colorMain="text-white" colorShadow="text-black/20" />
-              </div>
-
-              <div className="relative z-10">
-                <p className="text-white font-bold text-sm leading-tight mb-2 line-clamp-2 drop-shadow-sm">{p.name}</p>
-                <div className="w-full h-1.5 bg-black/20 rounded-full overflow-hidden">
-                  <div className="h-full bg-white rounded-full shadow-[0_0_5px_rgba(255,255,255,0.5)]" style={{ width: `${progress}% ` }}></div>
-                </div>
-                <p className="text-[10px] text-white/80 mt-1 font-medium">
+                <div className="relative z-10 flex justify-between items-start">
+                  <span className="bg-white/20 backdrop-blur-md px-2 py-1 rounded-lg text-[10px] font-bold text-white border border-white/20">
+                    {p.goal} Points
+                  </span>
                   {isMet ? (
-                    <span className="text-white font-black text-xs animate-pulse">👆 CLAIM NOW!</span>
-                  ) : timesClaimed > 0 ? (
-                    `Claimed ${timesClaimed}x · ${Math.max(0, p.goal - currentProgress)} more`
+                    <div className="bg-yellow-400 text-slate-900 rounded-full p-1.5 shadow-lg animate-bounce">
+                      <Trophy size={12} fill="currentColor" strokeWidth={0} />
+                    </div>
                   ) : (
-                    `${Math.max(0, p.goal - currentProgress)} more points`
+                    <div className="bg-white rounded-full p-1 shadow-sm">
+                      <Star size={10} className="text-yellow-400" fill="currentColor" />
+                    </div>
                   )}
-                </p>
+                </div>
+
+                <div className="relative z-10 flex-1 flex items-center justify-center my-2">
+                  {isMet && (
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="absolute inset-0 bg-yellow-300/30 rounded-2xl animate-pulse"></div>
+                    </div>
+                  )}
+                  <PremiumIcon Icon={getPrizeIcon(p.name)} size={48} colorMain="text-white" colorShadow="text-black/20" />
+                </div>
+
+                <div className="relative z-10">
+                  <p className="text-white font-bold text-sm leading-tight mb-2 line-clamp-2 drop-shadow-sm">{p.name}</p>
+                  <div className="w-full h-1.5 bg-black/20 rounded-full overflow-hidden">
+                    <div className="h-full bg-white rounded-full shadow-[0_0_5px_rgba(255,255,255,0.5)]" style={{ width: `${progress}% ` }}></div>
+                  </div>
+                  <p className="text-[10px] text-white/80 mt-1 font-medium">
+                    {isMet ? (
+                      <span className="text-white font-black text-xs animate-pulse">👆 CLAIM NOW!</span>
+                    ) : timesClaimed > 0 ? (
+                      `Claimed ${timesClaimed}x · ${Math.max(0, p.goal - currentProgress)} more`
+                    ) : (
+                      `${Math.max(0, p.goal - currentProgress)} more points`
+                    )}
+                  </p>
+                </div>
               </div>
             </div>
           )
