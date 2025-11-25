@@ -1,11 +1,9 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import {
-  Star, Plus, Trash2, Trophy, Settings, Sparkles,
-  Lightbulb, Gift, Award, Utensils, Edit2, X,
-  ToggleLeft, ToggleRight, ChevronRight,
-  Pizza, IceCream, Gamepad2, Palmtree, Clapperboard,
-  Zap, Image as ImageIcon,
-  BookOpen, Heart, Music, PartyPopper, Rocket, Pin
+  Rocket, Star, Gift, Plus, Trash2, Trophy, Settings, Sparkles,
+  Lightbulb, Award, Utensils, Edit2, X, ToggleLeft, ToggleRight, ChevronRight,
+  Pizza, IceCream, Gamepad2, Palmtree, Clapperboard, Zap, Image as ImageIcon,
+  BookOpen, Heart, Music, PartyPopper, Pin
 } from 'lucide-react';
 import { ConfettiSystem, type ConfettiHandle } from './Confetti';
 import { Onboarding } from './Onboarding';
@@ -898,22 +896,7 @@ const GrandCelebrationOverlay = ({ visible, prizeName, onClose, onReset, setting
 
 const FeedbackPopup = ({ visible, message = 'XP Added!' }: any) => visible ? <div className="fixed top-10 left-1/2 -translate-x-1/2 bg-cyan-500 text-slate-900 px-6 py-2 rounded-full font-bold shadow-[0_0_20px_rgba(6,182,212,0.5)] z-[100] animate-bounce border border-white/20">{message}</div> : null;
 
-const LoginScreen = ({ onLogin }: { onLogin: (code: string) => void }) => {
-  const [code, setCode] = useState('');
-  return (
-    <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-6">
-      <div className="relative bg-slate-900 border border-white/10 p-8 rounded-3xl w-full max-w-md text-center shadow-2xl">
-        <div className="mb-6 flex justify-center"><PremiumIcon Icon={Trophy} size={64} colorMain="text-yellow-400" colorShadow="text-yellow-800/50" /></div>
-        <h1 className="text-3xl font-black text-white mb-2">Family Rewards</h1>
-        <p className="text-slate-400 mb-8 text-sm">Enter your family code to start.</p>
-        <form onSubmit={(e) => { e.preventDefault(); if (code.length > 2) onLogin(code.trim().toUpperCase()); }} className="space-y-4">
-          <input type="text" value={code} onChange={(e) => setCode(e.target.value)} placeholder="FAMILY CODE" className="w-full p-4 bg-slate-950 border border-slate-800 rounded-xl text-center text-lg font-bold uppercase outline-none text-white placeholder:text-slate-700 transition-all focus:border-blue-500" />
-          <button type="submit" disabled={code.length < 3} className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 rounded-xl shadow-lg disabled:opacity-50 transition-all active:scale-95">Enter</button>
-        </form>
-      </div>
-    </div>
-  );
-};
+
 
 // --- MAIN APP ---
 export default function App() {

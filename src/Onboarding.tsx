@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Rocket, Star, Gift, ArrowRight, Check } from 'lucide-react';
+import { Rocket, Star, Gift, ArrowRight } from 'lucide-react';
 
 interface OnboardingProps {
     onLogin: (familyName: string) => void;
@@ -118,8 +118,8 @@ export const Onboarding = ({ onLogin }: OnboardingProps) => {
                         type="submit"
                         disabled={!familyName.trim()}
                         className={`w-full py-4 rounded-2xl font-black text-xl shadow-lg transition-all flex items-center justify-center gap-2 ${familyName.trim()
-                                ? 'bg-blue-600 hover:bg-blue-500 text-white shadow-blue-900/50 active:scale-95'
-                                : 'bg-slate-800 text-slate-500 cursor-not-allowed'
+                            ? 'bg-blue-600 hover:bg-blue-500 text-white shadow-blue-900/50 active:scale-95'
+                            : 'bg-slate-800 text-slate-500 cursor-not-allowed'
                             }`}
                     >
                         <span>Create Family</span>
