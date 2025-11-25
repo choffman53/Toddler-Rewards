@@ -24,12 +24,12 @@ if (typeof window !== 'undefined') {
 
 // --- CONFIGURATION ---
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY_HERE",
-  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT_ID.appspot.com",
-  messagingSenderId: "YOUR_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyCHrpTf8zozbNHGBR1RkLrEaRyahSgzrvc",
+  authDomain: "toddlerrewards.firebaseapp.com",
+  projectId: "toddlerrewards",
+  storageBucket: "toddlerrewards.firebasestorage.app",
+  messagingSenderId: "1002701125718",
+  appId: "1:1002701125718:web:40fb2da028e2055d71a3f7"
 };
 
 // Initialize Firebase
