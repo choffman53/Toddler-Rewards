@@ -341,54 +341,55 @@ const GoalListItem = ({ behavior, onUpdate, onClaim, onDelete, onEdit }: any) =>
         <div className="absolute inset-0 bg-gradient-to-br from-yellow-300/20 to-orange-400/20 animate-pulse"></div>
       )}
 
-      <div className="relative z-10 flex items-center gap-4">
-        {/* Icon */}
-        <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${gradient} flex items-center justify-center shadow-lg transform group-hover:rotate-6 transition-transform`}>
-          <Icon size={28} className="text-white" strokeWidth={2.5} fill={isComplete ? "currentColor" : "none"} />
-        </div>
-
-        {/* Content */}
-        <div className="flex-1 min-w-0">
-          <h3 className={`font-black text-lg mb-2 truncate ${isComplete ? 'text-white' : 'text-white'}`}>
-            {behavior.name}
-          </h3>
-
-          {/* Star Display */}
-          <div className="flex items-center gap-1 overflow-x-auto no-scrollbar pb-1 max-w-full mask-linear-fade p-1">
-            {[...Array(totalStars)].map((_, i) => (
-              <div key={i} className="flex-shrink-0">
-                <FunStar filled={i < currentStars} />
-              </div>
-            ))}
+      <div className="relative z-10">
+        <div className="flex items-center gap-4 mb-3">
+          {/* Icon */}
+          <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${gradient} flex items-center justify-center shadow-lg transform group-hover:rotate-6 transition-transform`}>
+            <Icon size={28} className="text-white" strokeWidth={2.5} fill={isComplete ? "currentColor" : "none"} />
           </div>
 
-          <p className={`text-xs mt-2 font-bold ${isComplete ? 'text-white/90' : 'text-slate-400'}`}>
-            {isComplete ? '🎉 Ready to spin the wheel!' : `${currentStars} / ${totalStars} stars`}
-          </p >
-        </div >
+          {/* Content */}
+          <div className="flex-1 min-w-0">
+            <h3 className={`font-black text-lg mb-1 truncate ${isComplete ? 'text-white' : 'text-white'}`}>
+              {behavior.name}
+            </h3>
+            <p className={`text-xs font-bold ${isComplete ? 'text-white/90' : 'text-slate-400'}`}>
+              {isComplete ? '🎉 Ready to spin the wheel!' : `${currentStars} / ${totalStars} stars`}
+            </p >
+          </div >
 
-        {/* Action Buttons */}
-        <div className="z-10 flex flex-col gap-2 pl-2">
-          {
-            isComplete ? (
-              <button
-                onClick={() => onClaim(behavior)}
-                className="bg-white text-orange-600 px-6 py-3 rounded-2xl font-black shadow-lg active:scale-95 transition-transform hover:shadow-xl hover:bg-yellow-50 flex items-center gap-2 animate-bounce"
-              >
-                <Gift size={20} />
-                <span>SPIN!</span>
-              </button >
-            ) : (
-              <button
-                onClick={(e) => onUpdate(behavior, 1, e)}
-                className="group relative bg-gradient-to-b from-blue-400 to-blue-600 hover:from-blue-300 hover:to-blue-500 text-white px-5 py-3 rounded-2xl font-black shadow-[0_6px_0_#1e3a8a] active:shadow-none active:translate-y-[6px] transition-all flex items-center gap-2 border-2 border-blue-300/50"
-              >
-                <Star size={18} fill="currentColor" className="text-yellow-300 group-hover:rotate-12 transition-transform" />
-                <span className="text-sm uppercase tracking-wider drop-shadow-sm">Add Star!</span>
-              </button>
-            )}
-        </div >
-      </div >
+          {/* Action Buttons */}
+          <div className="z-10 flex flex-col gap-2 pl-2">
+            {
+              isComplete ? (
+                <button
+                  onClick={() => onClaim(behavior)}
+                  className="bg-white text-orange-600 px-6 py-3 rounded-2xl font-black shadow-lg active:scale-95 transition-transform hover:shadow-xl hover:bg-yellow-50 flex items-center gap-2 animate-bounce"
+                >
+                  <Gift size={20} />
+                  <span>SPIN!</span>
+                </button >
+              ) : (
+                <button
+                  onClick={(e) => onUpdate(behavior, 1, e)}
+                  className="group relative bg-gradient-to-b from-blue-400 to-blue-600 hover:from-blue-300 hover:to-blue-500 text-white px-5 py-3 rounded-2xl font-black shadow-[0_6px_0_#1e3a8a] active:shadow-none active:translate-y-[6px] transition-all flex items-center gap-2 border-2 border-blue-300/50"
+                >
+                  <Star size={18} fill="currentColor" className="text-yellow-300 group-hover:rotate-12 transition-transform" />
+                  <span className="text-sm uppercase tracking-wider drop-shadow-sm">Add Star!</span>
+                </button>
+              )}
+          </div >
+        </div>
+
+        {/* Star Display - Full Width */}
+        <div className="flex items-center gap-1 flex-wrap p-1">
+          {[...Array(totalStars)].map((_, i) => (
+            <div key={i} className="flex-shrink-0">
+              <FunStar filled={i < currentStars} />
+            </div>
+          ))}
+        </div>
+      </div>
 
       {/* Edit and Delete Buttons */}
       <div className="absolute top-3 right-3 flex gap-2 z-20">
@@ -1033,7 +1034,8 @@ export default function App() {
       }
     } else if (delta > 0) {
       SOUNDS.star();
-      setFeedback({ visible: true, message: 'Star Added! ⭐' });
+      const remaining = behavior.goal - newCount;
+      setFeedback({ visible: true, message: `${remaining} more to go! ⭐` });
       setTimeout(() => setFeedback({ visible: false }), 1500);
 
       // Update locally if no Firebase
