@@ -325,7 +325,7 @@ const GoalListItem = ({ behavior, onUpdate, onClaim, onDelete, onEdit }: any) =>
   const totalStars = behavior.goal;
   const isComplete = currentStars >= totalStars;
   const [localFeedback, setLocalFeedback] = React.useState<{ visible: boolean, message: string } | null>(null);
-  const [particles, setParticles] = React.useState<{ id: number, color: string, angle: number, dist: number, size: number }[]>([]);
+  const [particles, setParticles] = React.useState<{ id: number, color: string, angle: number, dist: number, size: number, shape: string }[]>([]);
 
   const handleAddStar = (e: React.MouseEvent) => {
     onUpdate(behavior, 1, e);
@@ -337,15 +337,16 @@ const GoalListItem = ({ behavior, onUpdate, onClaim, onDelete, onEdit }: any) =>
 
     // Confetti Burst - App Colors
     const colors = ['#ec4899', '#a855f7', '#3b82f6', '#22c55e', '#eab308', '#ef4444', '#06b6d4'];
-    const newParticles = [...Array(20)].map((_, i) => ({
+    const newParticles = [...Array(30)].map((_, i) => ({
       id: Date.now() + i,
       color: colors[i % colors.length],
       angle: Math.random() * 360,
-      dist: 80 + Math.random() * 50,
-      size: 4 + Math.random() * 4
+      dist: 50 + Math.random() * 80,
+      size: 4 + Math.random() * 6,
+      shape: Math.random() > 0.5 ? '50%' : '2px' // Circle or Rounded Square
     }));
     setParticles(prev => [...prev, ...newParticles]);
-    setTimeout(() => setParticles([]), 1000);
+    setTimeout(() => setParticles([]), 800);
   };
 
   // Colorful gradients for different behaviors
@@ -451,11 +452,12 @@ const GoalListItem = ({ behavior, onUpdate, onClaim, onDelete, onEdit }: any) =>
               {particles.map((p) => (
                 <div
                   key={p.id}
-                  className="absolute rounded-sm pointer-events-none animate-confetti-pop"
+                  className="absolute pointer-events-none animate-confetti-pop"
                   style={{
                     backgroundColor: p.color,
-                    width: p.size || 6,
-                    height: p.size || 6,
+                    width: p.size,
+                    height: p.size,
+                    borderRadius: p.shape,
                     left: '50%',
                     top: '50%',
                     '--angle': `${p.angle}deg`,
