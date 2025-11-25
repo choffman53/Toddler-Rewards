@@ -5,7 +5,7 @@ import {
   ToggleLeft, ToggleRight, ChevronRight,
   Pizza, IceCream, Gamepad2, Palmtree, Clapperboard,
   Zap, Image as ImageIcon,
-  BookOpen, Heart, Music, PartyPopper, Rocket
+  BookOpen, Heart, Music, PartyPopper, Rocket, Pin
 } from 'lucide-react';
 import { initializeApp } from 'firebase/app';
 import { getAuth, signInAnonymously, onAuthStateChanged } from 'firebase/auth';
