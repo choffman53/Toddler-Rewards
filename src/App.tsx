@@ -910,16 +910,41 @@ const LoginScreen = ({ onLogin }: { onLogin: (code: string) => void }) => {
 // --- MAIN APP ---
 export default function App() {
   const [familyId, setFamilyId] = useState<string | null>(localStorage.getItem('family_id'));
-  const [behaviors, setBehaviors] = useState<any[]>([]);
-  const [settings, setSettings] = useState<any>({
-    grandPrizes: [
-      { id: 1, name: 'Ice Cream Treat', goal: 5, active: true, timesClaimed: 0 },
-      { id: 2, name: 'Pizza Party', goal: 10, active: true, timesClaimed: 0 },
-      { id: 3, name: 'Movie Night', goal: 20, active: true, timesClaimed: 0 },
-      { id: 4, name: 'Zoo Trip', goal: 30, active: true, timesClaimed: 0 }
-    ],
-    wheelPrizes: ["Sticker", "Treat", "Story"]
+  // Load initial state from LocalStorage if available
+  const [behaviors, setBehaviors] = useState<any[]>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('toddler_app_behaviors');
+      if (saved) return JSON.parse(saved);
+    }
+    return [];
   });
+
+  const [settings, setSettings] = useState<any>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('toddler_app_settings');
+      if (saved) return JSON.parse(saved);
+    }
+    return {
+      grandPrizes: [
+        { id: 1, name: 'Ice Cream Treat', goal: 5, active: true, timesClaimed: 0, imageUrl: '/prize-1.jpg' },
+        { id: 2, name: 'Pizza Party', goal: 10, active: true, timesClaimed: 0, imageUrl: '/prize-2.jpg' },
+        { id: 3, name: 'Movie Night', goal: 20, active: true, timesClaimed: 0, imageUrl: '/prize-3.jpg' },
+        { id: 4, name: 'Zoo Trip', goal: 30, active: true, timesClaimed: 0, imageUrl: '/prize-4.jpg' }
+      ],
+      wheelPrizes: ['Sticker', 'Treat', 'Story', 'Hug', 'Song'],
+      spentPoints: 0
+    };
+  });
+
+  // Save to LocalStorage whenever state changes
+  useEffect(() => {
+    localStorage.setItem('toddler_app_behaviors', JSON.stringify(behaviors));
+  }, [behaviors]);
+
+  useEffect(() => {
+    localStorage.setItem('toddler_app_settings', JSON.stringify(settings));
+  }, [settings]);
+
   const [_loading, setLoading] = useState(false);
   const [view, setView] = useState('dashboard');
 
@@ -950,18 +975,21 @@ export default function App() {
     return () => unsubAuth();
   }, []);
 
+  // Firebase Sync (Optional - only if configured)
   useEffect(() => {
-    if (!familyId) return;
-
-    // If Firebase is not configured, use demo data
-    if (!db) {
-      const demoTasks = [
-        { id: '1', name: 'Clean Your Room', goal: 5, count: 2, icon: 'star', completions: 0, lifetimeStars: 8 },
-        { id: '2', name: 'Brush Your Teeth', goal: 3, count: 1, icon: 'smile', completions: 2, lifetimeStars: 12 },
-        { id: '3', name: 'Eat Your Vegetables', goal: 4, count: 0, icon: 'utensils', completions: 1, lifetimeStars: 6 },
-        { id: '4', name: 'Help with Dishes', goal: 5, count: 4, icon: 'heart', completions: 0, lifetimeStars: 4 },
-      ];
-      setBehaviors(demoTasks);
+    if (!familyId || !db) {
+      // If no Firebase, ensure we have at least some demo data if empty
+      if (behaviors.length === 0) {
+        const demoTasks = [
+          { id: '1', name: 'Clean Your Room', goal: 5, count: 2, icon: 'star', completions: 0, lifetimeStars: 8 },
+          { id: '2', name: 'Brush Your Teeth', goal: 3, count: 1, icon: 'smile', completions: 2, lifetimeStars: 12 },
+          { id: '3', name: 'Eat Your Vegetables', goal: 4, count: 0, icon: 'utensils', completions: 1, lifetimeStars: 6 },
+          { id: '4', name: 'Help with Dishes', goal: 5, count: 4, icon: 'heart', completions: 0, lifetimeStars: 4 },
+        ];
+        // Only set if we really have nothing (first run)
+        const saved = localStorage.getItem('toddler_app_behaviors');
+        if (!saved) setBehaviors(demoTasks);
+      }
       setLoading(false);
       return;
     }
