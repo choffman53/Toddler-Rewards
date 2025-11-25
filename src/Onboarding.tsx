@@ -6,7 +6,7 @@ interface OnboardingProps {
 }
 
 export const Onboarding = ({ onLogin }: OnboardingProps) => {
-    const [familyName, setFamilyName] = useState('');
+    const [familyName, setFamilyName] = useState(localStorage.getItem('remembered_family_name') || '');
     const [showTutorial, setShowTutorial] = useState(false);
 
     const handleStart = (e: React.FormEvent) => {
@@ -17,7 +17,9 @@ export const Onboarding = ({ onLogin }: OnboardingProps) => {
     };
 
     const handleComplete = () => {
-        onLogin(familyName.trim());
+        const name = familyName.trim();
+        localStorage.setItem('remembered_family_name', name);
+        onLogin(name);
     };
 
     if (showTutorial) {
@@ -91,7 +93,7 @@ export const Onboarding = ({ onLogin }: OnboardingProps) => {
                 {/* Logo / Icon */}
                 <div className="relative w-32 h-32 mx-auto mb-8 animate-float-slow">
                     <div className="absolute inset-0 bg-blue-500 blur-[60px] opacity-40 rounded-full animate-pulse"></div>
-                    <img src="/app-icon.png" alt="App Icon" className="w-full h-full object-contain drop-shadow-2xl relative z-10" />
+                    <img src="/mascot.png" alt="App Icon" className="w-full h-full object-contain drop-shadow-2xl relative z-10" />
                 </div>
 
                 <div className="space-y-2">
