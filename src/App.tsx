@@ -345,11 +345,21 @@ const GoalListItem = ({ behavior, onUpdate, onClaim, onDelete, onEdit }: any) =>
     'from-red-500 to-pink-500',
   ];
 
+  const shadowColors = [
+    'shadow-[0_6px_0_#be123c]', // Rose-700
+    'shadow-[0_6px_0_#4c1d95]', // Violet-900
+    'shadow-[0_6px_0_#0e7490]', // Cyan-700
+    'shadow-[0_6px_0_#047857]', // Emerald-700
+    'shadow-[0_6px_0_#c2410c]', // Orange-700
+    'shadow-[0_6px_0_#be185d]', // Pink-700
+  ];
+
   // Use colorIndex if set, otherwise fall back to ID-based (for old goals)
   const gradientIndex = behavior.colorIndex !== undefined
     ? behavior.colorIndex % gradients.length
     : (behavior.id ? (typeof behavior.id === 'string' ? behavior.id.charCodeAt(0) : behavior.id) % gradients.length : 0);
   const gradient = gradients[gradientIndex];
+  const shadowColor = shadowColors[gradientIndex];
 
   const handleDelete = () => {
     onDelete(behavior.id);
@@ -422,7 +432,7 @@ const GoalListItem = ({ behavior, onUpdate, onClaim, onDelete, onEdit }: any) =>
           ) : (
             <button
               onClick={handleAddStar}
-              className="w-full group relative bg-gradient-to-b from-blue-400 to-blue-600 hover:from-blue-300 hover:to-blue-500 text-white px-5 py-4 rounded-2xl font-black shadow-[0_6px_0_#1e3a8a] active:shadow-none active:translate-y-[6px] transition-all flex items-center justify-center gap-3 border-2 border-blue-300/50"
+              className={`w-full group relative bg-gradient-to-r ${gradient} text-white px-5 py-4 rounded-2xl font-black ${shadowColor} active:shadow-none active:translate-y-[6px] transition-all flex items-center justify-center gap-3 border-2 border-white/20`}
             >
               <Star size={24} fill="currentColor" className="text-yellow-300 group-hover:rotate-12 transition-transform" />
               <span className="text-lg uppercase tracking-wider drop-shadow-sm">Add Star</span>
@@ -1297,7 +1307,7 @@ export default function App() {
 
       <FeedbackPopup {...feedback} />
 
-      <header className="bg-transparent p-6 flex justify-between items-center relative z-10">
+      <header className="bg-transparent p-6 pt-[calc(1.5rem+env(safe-area-inset-top))] flex justify-between items-center relative z-10">
         <div className="flex items-center gap-3">
           <div className="w-14 h-14 rounded-2xl overflow-hidden shadow-lg cursor-pointer hover:opacity-80 transition-opacity" onClick={handleLogout}>
             <img src="/avatar.png" alt="avatar" className="w-full h-full object-cover" />
