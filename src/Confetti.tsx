@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useImperativeHandle, forwardRef } from 'react';
+import { useEffect, useRef, useImperativeHandle, forwardRef } from 'react';
 
 // Physics variables
 const gravityConfetti = 0.3;
@@ -110,7 +110,7 @@ export const ConfettiSystem = forwardRef<ConfettiHandle, {}>((_, ref) => {
 
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        confetti.current.forEach((confetto, index) => {
+        confetti.current.forEach((confetto) => {
             let width = (confetto.dimensions.x * confetto.scale.x);
             let height = (confetto.dimensions.y * confetto.scale.y);
             ctx.translate(confetto.position.x, confetto.position.y);
@@ -121,7 +121,7 @@ export const ConfettiSystem = forwardRef<ConfettiHandle, {}>((_, ref) => {
             ctx.setTransform(1, 0, 0, 1, 0, 0);
         });
 
-        sequins.current.forEach((sequin, index) => {
+        sequins.current.forEach((sequin) => {
             ctx.translate(sequin.position.x, sequin.position.y);
             sequin.update();
             ctx.fillStyle = sequin.color;
