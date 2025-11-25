@@ -226,10 +226,13 @@ const GiftBoxSection = ({ prizes, totalRewards, onClaimPrize, onFeature, feature
               {/* Feature Pin Button - Outside overflow hidden */}
               <button
                 onClick={(e) => { e.stopPropagation(); onFeature && onFeature(p.id); }}
-                className={`absolute -top-3 -right-3 z-30 p-1.5 rounded-full shadow-xl transition-all border-2 border-white ${featuredId === p.id ? 'bg-blue-500 text-white scale-110' : 'bg-slate-700 text-slate-400 hover:bg-slate-600 hover:text-white'}`}
+                className={`absolute z-30 rounded-full shadow-xl transition-all flex items-center justify-center border-white ${featuredId === p.id
+                  ? `bg-gradient-to-br ${gradient} text-white -top-2 -right-2 p-2 border-2 scale-110`
+                  : 'bg-slate-800/80 text-slate-400 hover:bg-slate-700 hover:text-white -top-1 -right-1 p-1.5 border'
+                  }`}
                 title="Pin to Top"
               >
-                <Pin size={14} fill={featuredId === p.id ? "currentColor" : "none"} />
+                <Pin size={featuredId === p.id ? 14 : 12} fill={featuredId === p.id ? "currentColor" : "none"} />
               </button>
 
               <div
