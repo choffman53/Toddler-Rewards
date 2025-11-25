@@ -355,9 +355,11 @@ const GoalListItem = ({ behavior, onUpdate, onClaim, onDelete, onEdit }: any) =>
           </h3>
 
           {/* Star Display */}
-          <div className="flex items-center gap-1 flex-wrap">
+          <div className="flex items-center gap-1 overflow-x-auto no-scrollbar pb-1 max-w-full mask-linear-fade">
             {[...Array(totalStars)].map((_, i) => (
-              <FunStar key={i} filled={i < currentStars} />
+              <div key={i} className="flex-shrink-0">
+                <FunStar filled={i < currentStars} />
+              </div>
             ))}
           </div>
 
@@ -390,7 +392,7 @@ const GoalListItem = ({ behavior, onUpdate, onClaim, onDelete, onEdit }: any) =>
       </div >
 
       {/* Edit and Delete Buttons */}
-      <div className="absolute top-3 right-3 flex gap-2">
+      <div className="absolute top-3 right-3 flex gap-2 z-20">
         {!showDeleteConfirm ? (
           <>
             <button
@@ -769,13 +771,9 @@ const GrandCelebrationOverlay = ({ visible, prizeName, onClose, onReset, setting
                 style={{ opacity: 0.3 + (charge / 200) }}
               ></div>
 
-              {/* Chest Image */}
-              <div className="relative w-80 h-80 md:w-96 md:h-96 transition-transform duration-200 group-hover:scale-105 group-active:scale-95">
-                <img
-                  src="/chest.png"
-                  alt="Treasure Chest"
-                  className="w-full h-full object-contain drop-shadow-2xl"
-                />
+              {/* Chest Image Replacement */}
+              <div className="relative w-64 h-64 md:w-80 md:h-80 transition-transform duration-200 group-hover:scale-105 group-active:scale-95 flex items-center justify-center pointer-events-none select-none">
+                <PremiumIcon Icon={Gift} size={240} colorMain="text-yellow-400" colorShadow="text-yellow-900/50" />
               </div>
             </div>
 
@@ -1259,7 +1257,7 @@ export default function App() {
             // Optional: Add logic if needed when prize is won
             console.log('Won:', prize);
 
-            setShowWheel(false);
+            // setShowWheel(false); // Don't close immediately, let user click 'Collect'
           }}
         />
       )}
