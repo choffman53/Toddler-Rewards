@@ -230,9 +230,10 @@ const GiftBoxSection = ({ prizes, totalRewards, onClaimPrize, onFeature, feature
               {/* Feature Pin Button */}
               <button
                 onClick={(e) => { e.stopPropagation(); onFeature && onFeature(p.id); }}
-                className={`absolute top-2 right-2 z-20 p-1.5 rounded-full transition-all ${featuredId === p.id ? 'bg-white text-blue-500 shadow-lg scale-110' : 'bg-black/20 text-white/50 hover:bg-black/40 hover:text-white'}`}
+                className={`absolute -top-3 -right-3 z-30 p-1.5 rounded-full shadow-xl transition-all border-2 border-white ${featuredId === p.id ? 'bg-blue-500 text-white scale-110' : 'bg-slate-700 text-slate-400 hover:bg-slate-600 hover:text-white'}`}
+                title="Pin to Top"
               >
-                <Pin size={12} fill={featuredId === p.id ? "currentColor" : "none"} />
+                <Pin size={14} fill={featuredId === p.id ? "currentColor" : "none"} />
               </button>
 
               <div className="relative z-10 flex justify-between items-start">
@@ -769,7 +770,7 @@ const GrandCelebrationOverlay = ({ visible, prizeName, onClose, onReset, setting
           <div
             onMouseDown={startCharging}
             onTouchStart={startCharging}
-            className="cursor-pointer group relative"
+            className="cursor-pointer group relative flex flex-col items-center"
           >
             {/* Shake Container */}
             <div
