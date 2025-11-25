@@ -8,6 +8,7 @@ import {
   BookOpen, Heart, Music, PartyPopper, Rocket, Pin
 } from 'lucide-react';
 import { ConfettiSystem, type ConfettiHandle } from './Confetti';
+import { Onboarding } from './Onboarding';
 import { initializeApp } from 'firebase/app';
 import { getAuth, signInAnonymously, onAuthStateChanged } from 'firebase/auth';
 import {
@@ -1239,7 +1240,7 @@ export default function App() {
   const addWheelPrize = () => { if (newPrize.trim()) { setSettings((prev: any) => ({ ...prev, wheelPrizes: [...(prev.wheelPrizes || []), newPrize.trim()] })); setNewPrize(''); } };
   const removeWheelPrize = (idx: number) => { setSettings((prev: any) => ({ ...prev, wheelPrizes: (prev.wheelPrizes || []).filter((_: any, i: number) => i !== idx) })); };
 
-  if (!familyId) return <LoginScreen onLogin={handleLogin} />;
+  if (!familyId) return <Onboarding onLogin={handleLogin} />;
 
   return (
     <div className="min-h-screen bg-slate-950 font-sans pb-24 select-none overflow-x-hidden text-slate-200 relative">
