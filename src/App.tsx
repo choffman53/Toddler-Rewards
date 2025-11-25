@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import {
   Star, Plus, Trash2, Trophy, Settings, Sparkles,
   Lightbulb, Gift, Award, Utensils, Edit2, X,
-  Ticket, ToggleLeft, ToggleRight, ChevronRight,
+  ToggleLeft, ToggleRight, ChevronRight,
   Pizza, IceCream, Gamepad2, Palmtree, Clapperboard,
   Zap, Image as ImageIcon,
   BookOpen, Heart, Music, PartyPopper, Rocket
@@ -503,6 +503,7 @@ const SurpriseEggModal = ({ onClose, onWin, prizes, settings }: any) => {
         setTimeout(() => {
           setStage('revealed');
           SOUNDS.success(); // Ta-da!
+          if (onWin) onWin(prize);
         }, 500);
       }
     }
