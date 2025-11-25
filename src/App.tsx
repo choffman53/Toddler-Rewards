@@ -117,7 +117,9 @@ const NextPrizeCard = ({ totalRewards, settings }: any) => {
       return { ...p, currentProgress, canClaim, progress, pointsNeeded: Math.max(0, p.goal - currentProgress) };
     });
 
-  const nextPrize = prizesWithProgress
+  const featured = settings.featuredPrizeId ? prizesWithProgress.find((p: any) => p.id === settings.featuredPrizeId) : null;
+
+  const nextPrize = featured || prizesWithProgress
     .filter((p: any) => !p.canClaim)
     .sort((a: any, b: any) => {
       if (a.pointsNeeded !== b.pointsNeeded) return a.pointsNeeded - b.pointsNeeded;
@@ -159,7 +161,7 @@ const NextPrizeCard = ({ totalRewards, settings }: any) => {
         {/* Header Badges */}
         <div className="flex items-start justify-between">
           <div className="bg-white/10 backdrop-blur-md text-white/90 font-bold px-4 py-1.5 rounded-full text-[10px] uppercase tracking-widest border border-white/10 shadow-sm">
-            Next Prize
+            Next Prize {settings.featuredPrizeId === nextPrize.id && '📌'}
           </div>
 
           <div className="bg-white text-slate-900 rounded-2xl p-2 min-w-[60px] flex flex-col items-center justify-center shadow-lg transform rotate-3">
@@ -193,7 +195,7 @@ const NextPrizeCard = ({ totalRewards, settings }: any) => {
 };
 
 // --- GIFT BOX SECTION (Carousel) ---
-const GiftBoxSection = ({ prizes, totalRewards, onClaimPrize }: any) => {
+const GiftBoxSection = ({ prizes, totalRewards, onClaimPrize, onFeature, featuredId }: any) => {
   const sortedPrizes = [...(prizes || [])].sort((a, b) => a.goal - b.goal).filter(p => p.active);
 
   return (
@@ -224,6 +226,14 @@ const GiftBoxSection = ({ prizes, totalRewards, onClaimPrize }: any) => {
             >
               {/* Background Pattern */}
               <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/diagonal-stripes-transparent.png')] opacity-10 mix-blend-overlay"></div>
+
+              {/* Feature Pin Button */}
+              <button
+                onClick={(e) => { e.stopPropagation(); onFeature && onFeature(p.id); }}
+                className={`absolute top-2 right-2 z-20 p-1.5 rounded-full transition-all ${featuredId === p.id ? 'bg-white text-blue-500 shadow-lg scale-110' : 'bg-black/20 text-white/50 hover:bg-black/40 hover:text-white'}`}
+              >
+                <Pin size={12} fill={featuredId === p.id ? "currentColor" : "none"} />
+              </button>
 
               <div className="relative z-10 flex justify-between items-start">
                 <span className="bg-white/20 backdrop-blur-md px-2 py-1 rounded-lg text-[10px] font-bold text-white border border-white/20">
@@ -763,9 +773,9 @@ const GrandCelebrationOverlay = ({ visible, prizeName, onClose, onReset, setting
           >
             {/* Shake Container */}
             <div
-              className="relative transition-transform duration-75 origin-center"
+              className="relative transition-transform duration-75 origin-center mx-auto"
               style={{
-                transform: `translate(${Math.random() * charge * 0.1}px, ${Math.random() * charge * 0.1}px) scale(${1 + (charge / 700)})`
+                transform: `translate(${(Math.random() - 0.5) * charge * 0.2}px, ${(Math.random() - 0.5) * charge * 0.2}px) scale(${1 + (charge / 700)})`
               }}
             >
               {/* Glow - Intensifies with charge */}
@@ -1103,6 +1113,13 @@ export default function App() {
     setSettings({ ...settings, grandPrizes: updated });
   };
 
+  const toggleFeature = (prizeId: string) => {
+    const newId = settings.featuredPrizeId === prizeId ? null : prizeId;
+    const newSettings = { ...settings, featuredPrizeId: newId };
+    setSettings(newSettings);
+    if (db && familyId) setDoc(doc(db, 'families', familyId, 'config', 'main'), newSettings);
+  };
+
   const saveBehavior = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name.trim()) return;
@@ -1283,8 +1300,8 @@ export default function App() {
               <div className="flex items-center gap-1 text-xs font-bold text-green-400">
                 Level {Math.floor(totalStars / 50) + 1} <Zap size={10} fill="currentColor" />
               </div>
-              <div className="bg-gradient-to-r from-cyan-500 to-blue-500 text-white px-2 py-0.5 rounded-full text-[10px] font-black shadow-lg">
-                {totalRewards} Points
+              <div className="flex items-center gap-1 text-xs font-bold text-blue-400">
+                {totalRewards} Points <Star size={10} fill="currentColor" />
               </div>
             </div>
           </div>
@@ -1301,7 +1318,13 @@ export default function App() {
         {view === 'dashboard' ? (
           <div className="space-y-8">
             <NextPrizeCard totalRewards={totalRewards} settings={settings} onUpdatePrize={updateGrandPrize} />
-            <GiftBoxSection prizes={settings.grandPrizes} totalRewards={totalRewards} onClaimPrize={claimGrandPrize} />
+            <GiftBoxSection
+              prizes={settings.grandPrizes}
+              totalRewards={totalRewards}
+              onClaimPrize={claimGrandPrize}
+              onFeature={toggleFeature}
+              featuredId={settings.featuredPrizeId}
+            />
 
             <div>
               <div className="flex justify-between items-end mb-4 px-2">
