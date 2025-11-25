@@ -3,10 +3,11 @@ import {
   Rocket, Star, Gift, Plus, Trash2, Trophy, Settings, Sparkles,
   Lightbulb, Award, Utensils, Edit2, X, ToggleLeft, ToggleRight, ChevronRight,
   Pizza, IceCream, Gamepad2, Palmtree, Clapperboard, Zap, Image as ImageIcon,
-  BookOpen, Heart, Music, PartyPopper, Pin
+  BookOpen, Heart, Music, PartyPopper, Pin, HelpCircle
 } from 'lucide-react';
 import { ConfettiSystem, type ConfettiHandle } from './Confetti';
 import { Onboarding } from './Onboarding';
+import { Tutorial } from './Tutorial';
 import { initializeApp } from 'firebase/app';
 import { getAuth, signInAnonymously, onAuthStateChanged } from 'firebase/auth';
 import {
@@ -201,9 +202,12 @@ const GiftBoxSection = ({ prizes, totalRewards, onClaimPrize, onFeature, feature
   return (
     <div className="mb-8">
       <div className="flex justify-between items-end mb-4 px-2">
-        <div>
-          <h2 className="text-xl font-bold text-white tracking-wide">Grand Prizes</h2>
-          <p className="text-xs text-slate-400 mt-1">Earn points by completing activities to unlock prizes</p>
+        <div className="flex items-center gap-3 mb-4">
+          <div className="p-3 bg-purple-500/20 rounded-xl text-purple-400"><Trophy size={24} /></div>
+          <div>
+            <h3 className="font-bold text-xl text-white">Grand Prizes</h3>
+            <p className="text-sm text-slate-400">Earn points by completing missions to unlock individual prizes.</p>
+          </div>
         </div>
       </div>
 
@@ -954,6 +958,7 @@ export default function App() {
   const [editingGrandPrize, setEditingGrandPrize] = useState<any>(null);
   const [newPrize, setNewPrize] = useState('');
   const [_animateBar, setAnimateBar] = useState(false);
+  const [showTutorial, setShowTutorial] = useState(false);
   const confettiRef = useRef<ConfettiHandle>(null); // Ref for ConfettiSystem
 
   // Auth & Data
@@ -1224,6 +1229,7 @@ export default function App() {
   const removeWheelPrize = (idx: number) => { setSettings((prev: any) => ({ ...prev, wheelPrizes: (prev.wheelPrizes || []).filter((_: any, i: number) => i !== idx) })); };
 
   if (!familyId) return <Onboarding onLogin={handleLogin} />;
+  if (showTutorial) return <Tutorial onComplete={() => setShowTutorial(false)} />;
 
   return (
     <div className="min-h-screen bg-slate-950 font-sans pb-24 select-none overflow-x-hidden text-slate-200 relative">
@@ -1338,11 +1344,19 @@ export default function App() {
           </div>
         ) : view === 'settings' ? (
           <div className="p-4 max-w-md mx-auto space-y-6">
-            <div className="flex items-center gap-3 mb-6">
-              <button onClick={() => setView('dashboard')} className="p-3 hover:bg-slate-800 rounded-xl border border-white/10 text-slate-300 transition-colors"><ChevronRight className="rotate-180" /></button>
-              <h2 className="text-2xl font-black text-white">Settings</h2>
+            {/* Settings Header */}
+            <div className="flex items-center justify-between mb-8">
+              <h2 className="text-3xl font-black text-white">Settings</h2>
+              <div className="flex gap-2">
+                <button onClick={() => setShowTutorial(true)} className="bg-slate-800 hover:bg-slate-700 text-slate-300 px-4 py-2 rounded-xl font-bold transition-colors flex items-center gap-2">
+                  <HelpCircle size={18} />
+                  <span>Help</span>
+                </button>
+                <button onClick={handleLogout} className="bg-red-500/10 hover:bg-red-500/20 text-red-400 px-4 py-2 rounded-xl font-bold transition-colors">
+                  Sign Out
+                </button>
+              </div>
             </div>
-
             <div className="bg-slate-900 rounded-3xl border border-white/10 p-6 shadow-lg">
               <h3 className="font-bold text-purple-400 mb-4 flex items-center gap-2 uppercase tracking-wider text-xs"><Gift size={16} /> Grand Prizes</h3>
               <div className="space-y-3 mb-6">
