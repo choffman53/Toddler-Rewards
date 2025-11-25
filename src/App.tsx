@@ -281,10 +281,10 @@ const GiftBoxSection = ({ prizes, totalRewards, onClaimPrize }: any) => {
 };
 
 // --- GOAL LIST ITEM (Star-based, Colorful) ---
-const FunStar = ({ filled }: { filled: boolean }) => (
-  <div className={`relative transition-all duration-500 ${filled ? 'scale-110 opacity-100' : 'scale-90 opacity-30 grayscale'}`}>
+const FunStar = ({ filled, size = 32 }: { filled: boolean, size?: number }) => (
+  <div className={`relative transition-all duration-500 ${filled ? 'scale-110 opacity-100' : 'scale-90 opacity-30 grayscale'}`} style={{ width: size, height: size }}>
     <div className={`absolute inset-0 bg-yellow-400 blur-md rounded-full transition-opacity duration-500 ${filled ? 'opacity-60' : 'opacity-0'}`}></div>
-    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className={`drop-shadow-lg relative z-10 ${filled ? 'animate-pulse' : ''}`}>
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className={`drop-shadow-lg relative z-10 ${filled ? 'animate-pulse' : ''}`}>
       <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"
         fill={filled ? "url(#starGradient)" : "#475569"}
         stroke={filled ? "#B45309" : "#64748B"}
@@ -309,6 +309,16 @@ const GoalListItem = ({ behavior, onUpdate, onClaim, onDelete, onEdit }: any) =>
   const totalStars = behavior.goal;
   const isComplete = currentStars >= totalStars;
   const [showDeleteConfirm, setShowDeleteConfirm] = React.useState(false);
+  const [localFeedback, setLocalFeedback] = React.useState<{ visible: boolean, message: string } | null>(null);
+
+  const handleAddStar = (e: React.MouseEvent) => {
+    onUpdate(behavior, 1, e);
+    const remaining = behavior.goal - (currentStars + 1);
+    if (remaining > 0) {
+      setLocalFeedback({ visible: true, message: `${remaining} LEFT!` });
+      setTimeout(() => setLocalFeedback(null), 2000);
+    }
+  };
 
   // Colorful gradients for different behaviors
   const gradients = [
@@ -342,7 +352,7 @@ const GoalListItem = ({ behavior, onUpdate, onClaim, onDelete, onEdit }: any) =>
       )}
 
       <div className="relative z-10">
-        <div className="flex items-center gap-4 mb-3">
+        <div className="flex items-center gap-4 mb-4">
           {/* Icon */}
           <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${gradient} flex items-center justify-center shadow-lg transform group-hover:rotate-6 transition-transform`}>
             <Icon size={28} className="text-white" strokeWidth={2.5} fill={isComplete ? "currentColor" : "none"} />
@@ -357,37 +367,53 @@ const GoalListItem = ({ behavior, onUpdate, onClaim, onDelete, onEdit }: any) =>
               {isComplete ? '🎉 Ready to spin the wheel!' : `${currentStars} / ${totalStars} stars`}
             </p >
           </div >
-
-          {/* Action Buttons */}
-          <div className="z-10 flex flex-col gap-2 pl-2">
-            {
-              isComplete ? (
-                <button
-                  onClick={() => onClaim(behavior)}
-                  className="bg-white text-orange-600 px-6 py-3 rounded-2xl font-black shadow-lg active:scale-95 transition-transform hover:shadow-xl hover:bg-yellow-50 flex items-center gap-2 animate-bounce"
-                >
-                  <Gift size={20} />
-                  <span>SPIN!</span>
-                </button >
-              ) : (
-                <button
-                  onClick={(e) => onUpdate(behavior, 1, e)}
-                  className="group relative bg-gradient-to-b from-blue-400 to-blue-600 hover:from-blue-300 hover:to-blue-500 text-white px-5 py-3 rounded-2xl font-black shadow-[0_6px_0_#1e3a8a] active:shadow-none active:translate-y-[6px] transition-all flex items-center gap-2 border-2 border-blue-300/50"
-                >
-                  <Star size={18} fill="currentColor" className="text-yellow-300 group-hover:rotate-12 transition-transform" />
-                  <span className="text-sm uppercase tracking-wider drop-shadow-sm">Add Star!</span>
-                </button>
-              )}
-          </div >
         </div>
 
-        {/* Star Display - Full Width */}
-        <div className="flex items-center gap-1 flex-wrap p-1">
-          {[...Array(totalStars)].map((_, i) => (
-            <div key={i} className="flex-shrink-0">
-              <FunStar filled={i < currentStars} />
+        {/* Star Display - Full Width & Bigger */}
+        <div className="relative mb-6 min-h-[60px] flex items-center justify-center">
+          {/* Local Popup Overlay */}
+          {localFeedback?.visible && (
+            <div className="absolute inset-0 z-50 flex items-center justify-center pointer-events-none -mt-12">
+              <div className="bg-white text-slate-900 px-6 py-3 rounded-full font-black shadow-[0_10px_40px_rgba(0,0,0,0.5)] animate-bounce-in flex items-center gap-2 border-4 border-yellow-400 scale-110 rotate-[-2deg]">
+                <span className="text-2xl">⭐</span>
+                <span className="text-xl tracking-black">{localFeedback.message}</span>
+                <div className="absolute inset-0 overflow-hidden rounded-full">
+                  <div className="absolute top-0 left-1/4 w-2 h-2 bg-red-500 rounded-full animate-ping"></div>
+                  <div className="absolute bottom-0 right-1/4 w-2 h-2 bg-blue-500 rounded-full animate-ping delay-75"></div>
+                  <div className="absolute top-1/2 left-0 w-2 h-2 bg-green-500 rounded-full animate-ping delay-150"></div>
+                </div>
+              </div>
             </div>
-          ))}
+          )}
+
+          <div className="flex items-center gap-2 flex-wrap justify-center p-2">
+            {[...Array(totalStars)].map((_, i) => (
+              <div key={i} className="flex-shrink-0 transition-transform hover:scale-110">
+                <FunStar filled={i < currentStars} size={48} />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Action Button - Full Width Row */}
+        <div className="mt-2">
+          {isComplete ? (
+            <button
+              onClick={() => onClaim(behavior)}
+              className="w-full bg-white text-orange-600 px-6 py-4 rounded-2xl font-black shadow-lg active:scale-95 transition-transform hover:shadow-xl hover:bg-yellow-50 flex items-center justify-center gap-3 animate-bounce text-xl"
+            >
+              <Gift size={24} />
+              <span>SPIN THE WHEEL!</span>
+            </button >
+          ) : (
+            <button
+              onClick={handleAddStar}
+              className="w-full group relative bg-gradient-to-b from-blue-400 to-blue-600 hover:from-blue-300 hover:to-blue-500 text-white px-5 py-4 rounded-2xl font-black shadow-[0_6px_0_#1e3a8a] active:shadow-none active:translate-y-[6px] transition-all flex items-center justify-center gap-3 border-2 border-blue-300/50"
+            >
+              <Star size={24} fill="currentColor" className="text-yellow-300 group-hover:rotate-12 transition-transform" />
+              <span className="text-lg uppercase tracking-wider drop-shadow-sm">Add Star</span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -1034,9 +1060,9 @@ export default function App() {
       }
     } else if (delta > 0) {
       SOUNDS.star();
-      const remaining = behavior.goal - newCount;
-      setFeedback({ visible: true, message: `${remaining} more to go! ⭐` });
-      setTimeout(() => setFeedback({ visible: false }), 1500);
+      // Feedback handled locally in GoalListItem
+      // setFeedback({ visible: true, message: 'Star Added! ⭐' });
+      // setTimeout(() => setFeedback({ visible: false }), 1500);
 
       // Update locally if no Firebase
       if (!db) {
