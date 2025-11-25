@@ -130,18 +130,19 @@ const NextPrizeCard = ({ totalRewards, settings }: any) => {
   const progress = nextPrize.progress;
 
   // Determine background image
-  let heroStyle = {};
+  const [randomImage, setRandomImage] = useState('');
 
-  if (nextPrize.imageUrl) {
-    heroStyle = { backgroundImage: `url(${nextPrize.imageUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' };
-  } else {
-    // Fallback if no image assigned yet
-    heroStyle = {
-      backgroundImage: `url('/prize-1.jpg')`,
-      backgroundSize: 'cover',
-      backgroundPosition: 'center'
-    };
-  }
+  useEffect(() => {
+    // Randomize image on mount (page refresh)
+    setRandomImage(`/prize-${Math.floor(Math.random() * 8) + 1}.jpg`);
+  }, []);
+
+  // Determine background image - use random image for hero
+  const heroStyle = {
+    backgroundImage: `url(${randomImage || '/prize-1.jpg'})`,
+    backgroundSize: 'cover',
+    backgroundPosition: 'center'
+  };
 
   return (
     <div className="relative w-full h-64 rounded-3xl overflow-hidden shadow-2xl mb-8 group">
@@ -201,9 +202,6 @@ const GiftBoxSection = ({ prizes, totalRewards, onClaimPrize }: any) => {
         <div>
           <h2 className="text-xl font-bold text-white tracking-wide">Grand Prizes</h2>
           <p className="text-xs text-slate-400 mt-1">Earn points by completing activities to unlock prizes</p>
-        </div>
-        <div className="bg-gradient-to-r from-cyan-500 to-blue-500 text-white px-3 py-1.5 rounded-full text-sm font-black shadow-lg">
-          {totalRewards} Points
         </div>
       </div>
 
@@ -308,7 +306,6 @@ const GoalListItem = ({ behavior, onUpdate, onClaim, onDelete, onEdit }: any) =>
   const currentStars = behavior.count || 0;
   const totalStars = behavior.goal;
   const isComplete = currentStars >= totalStars;
-  const [showDeleteConfirm, setShowDeleteConfirm] = React.useState(false);
   const [localFeedback, setLocalFeedback] = React.useState<{ visible: boolean, message: string } | null>(null);
 
   const handleAddStar = (e: React.MouseEvent) => {
@@ -338,7 +335,6 @@ const GoalListItem = ({ behavior, onUpdate, onClaim, onDelete, onEdit }: any) =>
 
   const handleDelete = () => {
     onDelete(behavior.id);
-    setShowDeleteConfirm(false);
   };
 
   return (
@@ -403,7 +399,7 @@ const GoalListItem = ({ behavior, onUpdate, onClaim, onDelete, onEdit }: any) =>
               className="w-full bg-white text-orange-600 px-6 py-4 rounded-2xl font-black shadow-lg active:scale-95 transition-transform hover:shadow-xl hover:bg-yellow-50 flex items-center justify-center gap-3 animate-bounce text-xl"
             >
               <Gift size={24} />
-              <span>SPIN THE WHEEL!</span>
+              <span>OPEN SURPRISE!</span>
             </button >
           ) : (
             <button
@@ -419,39 +415,20 @@ const GoalListItem = ({ behavior, onUpdate, onClaim, onDelete, onEdit }: any) =>
 
       {/* Edit and Delete Buttons */}
       <div className="absolute top-3 right-3 flex gap-2 z-20">
-        {!showDeleteConfirm ? (
-          <>
-            <button
-              onClick={() => onEdit(behavior)}
-              className="text-slate-500 hover:text-cyan-400 opacity-0 group-hover:opacity-100 transition-all p-2 bg-black/20 rounded-lg hover:bg-cyan-500/20"
-              title="Edit"
-            >
-              <Edit2 size={16} />
-            </button>
-            <button
-              onClick={() => setShowDeleteConfirm(true)}
-              className="text-slate-500 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all p-2 bg-black/20 rounded-lg hover:bg-red-500/20"
-              title="Delete"
-            >
-              <Trash2 size={16} />
-            </button>
-          </>
-        ) : (
-          <>
-            <button
-              onClick={handleDelete}
-              className="text-white bg-red-500 hover:bg-red-600 transition-colors px-3 py-2 rounded-lg text-xs font-bold"
-            >
-              Confirm
-            </button>
-            <button
-              onClick={() => setShowDeleteConfirm(false)}
-              className="text-slate-300 bg-slate-700 hover:bg-slate-600 transition-colors px-3 py-2 rounded-lg text-xs font-bold"
-            >
-              Cancel
-            </button>
-          </>
-        )}
+        <button
+          onClick={() => onEdit(behavior)}
+          className="text-slate-500 hover:text-cyan-400 opacity-0 group-hover:opacity-100 transition-all p-2 bg-black/20 rounded-lg hover:bg-cyan-500/20"
+          title="Edit"
+        >
+          <Edit2 size={16} />
+        </button>
+        <button
+          onClick={handleDelete}
+          className="text-slate-500 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all p-2 bg-black/20 rounded-lg hover:bg-red-500/20"
+          title="Delete"
+        >
+          <Trash2 size={16} />
+        </button>
       </div>
     </div >
   );
@@ -786,7 +763,7 @@ const GrandCelebrationOverlay = ({ visible, prizeName, onClose, onReset, setting
           >
             {/* Shake Container */}
             <div
-              className="relative transition-transform duration-75"
+              className="relative transition-transform duration-75 origin-center"
               style={{
                 transform: `translate(${Math.random() * charge * 0.1}px, ${Math.random() * charge * 0.1}px) scale(${1 + (charge / 700)})`
               }}
@@ -1026,7 +1003,7 @@ export default function App() {
 
   // --- HANDLERS ---
   const handleLogin = (code: string) => { localStorage.setItem('family_id', code); setFamilyId(code); };
-  // const handleLogout = () => { if(confirm("Sign out?")) {localStorage.removeItem('family_id'); setFamilyId(null); setBehaviors([]); } };
+  const handleLogout = () => { if (confirm("Sign out?")) { localStorage.removeItem('family_id'); setFamilyId(null); setBehaviors([]); } };
 
   const triggerStarBurst = (e: React.MouseEvent) => {
     const newClick = { id: Date.now(), x: e.clientX, y: e.clientY };
@@ -1297,13 +1274,18 @@ export default function App() {
 
       <header className="bg-transparent p-6 flex justify-between items-center relative z-10">
         <div className="flex items-center gap-3">
-          <div className="w-14 h-14 rounded-2xl overflow-hidden shadow-lg">
+          <div className="w-14 h-14 rounded-2xl overflow-hidden shadow-lg cursor-pointer hover:opacity-80 transition-opacity" onClick={handleLogout}>
             <img src="/avatar.png" alt="avatar" className="w-full h-full object-cover" />
           </div>
           <div>
             <h1 className="font-black text-xl text-white tracking-tight">Hello, {familyId}!</h1>
-            <div className="flex items-center gap-1 text-xs font-bold text-green-400">
-              Level {Math.floor(totalStars / 50) + 1} <Zap size={10} fill="currentColor" />
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-1 text-xs font-bold text-green-400">
+                Level {Math.floor(totalStars / 50) + 1} <Zap size={10} fill="currentColor" />
+              </div>
+              <div className="bg-gradient-to-r from-cyan-500 to-blue-500 text-white px-2 py-0.5 rounded-full text-[10px] font-black shadow-lg">
+                {totalRewards} Points
+              </div>
             </div>
           </div>
         </div>
