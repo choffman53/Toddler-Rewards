@@ -111,8 +111,7 @@ const NextPrizeCard = ({ totalRewards, settings }: any) => {
   const prizesWithProgress = settings.grandPrizes
     .filter((p: any) => p.active)
     .map((p: any) => {
-      const timesClaimed = p.timesClaimed || 0;
-      const currentProgress = totalRewards - (timesClaimed * p.goal);
+      const currentProgress = totalRewards - (p.lastClaimedAt || 0);
       const canClaim = currentProgress >= p.goal;
       const progress = Math.min(100, (currentProgress / p.goal) * 100);
       return { ...p, currentProgress, canClaim, progress, pointsNeeded: Math.max(0, p.goal - currentProgress) };
@@ -211,7 +210,7 @@ const GiftBoxSection = ({ prizes, totalRewards, onClaimPrize }: any) => {
       <div className="flex gap-4 overflow-x-auto py-8 scrollbar-hide -mx-4 px-4 snap-x">
         {sortedPrizes.map((p: any, i: number) => {
           const timesClaimed = p.timesClaimed || 0;
-          const currentProgress = totalRewards - (timesClaimed * p.goal);
+          const currentProgress = totalRewards - (p.lastClaimedAt || 0);
           const isMet = currentProgress >= p.goal;
           const progress = Math.min(100, (currentProgress / p.goal) * 100);
           const gradient = GRADIENTS[i % GRADIENTS.length];
@@ -355,7 +354,7 @@ const GoalListItem = ({ behavior, onUpdate, onClaim, onDelete, onEdit }: any) =>
           </h3>
 
           {/* Star Display */}
-          <div className="flex items-center gap-1 overflow-x-auto no-scrollbar pb-1 max-w-full mask-linear-fade">
+          <div className="flex items-center gap-1 overflow-x-auto no-scrollbar pb-1 max-w-full mask-linear-fade p-1">
             {[...Array(totalStars)].map((_, i) => (
               <div key={i} className="flex-shrink-0">
                 <FunStar filled={i < currentStars} />
@@ -773,7 +772,7 @@ const GrandCelebrationOverlay = ({ visible, prizeName, onClose, onReset, setting
 
               {/* Chest Image Replacement */}
               <div className="relative w-64 h-64 md:w-80 md:h-80 transition-transform duration-200 group-hover:scale-105 group-active:scale-95 flex items-center justify-center pointer-events-none select-none">
-                <PremiumIcon Icon={Gift} size={240} colorMain="text-yellow-400" colorShadow="text-yellow-900/50" />
+                <img src="/Chest.png" alt="Treasure Chest" className="w-full h-full object-contain drop-shadow-2xl" />
               </div>
             </div>
 
@@ -985,7 +984,11 @@ export default function App() {
     return () => { unsubB(); unsubS(); };
   }, [familyId]);
 
-  const totalRewards = useMemo(() => behaviors.reduce((acc, b) => acc + (b.completions || 0), 0), [behaviors]);
+  const totalRewards = useMemo(() => {
+    const earned = behaviors.reduce((acc, b) => acc + (b.lifetimeStars || 0), 0);
+    const spent = settings.spentPoints || 0;
+    return Math.max(0, earned - spent);
+  }, [behaviors, settings.spentPoints]);
   const totalStars = useMemo(() => behaviors.reduce((acc, b) => acc + (b.lifetimeStars || 0), 0), [behaviors]);
 
   const prevTotal = useRef(totalRewards);
@@ -1232,7 +1235,7 @@ export default function App() {
           const claimedPrize = settings.grandPrizes.find((p: any) => p.name === grandPrizeName);
           if (claimedPrize) {
             const updatedPrizes = settings.grandPrizes.map((p: any) =>
-              p.id === claimedPrize.id ? { ...p, timesClaimed: (p.timesClaimed || 0) + 1 } : p
+              p.id === claimedPrize.id ? { ...p, lastClaimedAt: totalRewards } : p
             );
 
             setSettings({ ...settings, grandPrizes: updatedPrizes });
