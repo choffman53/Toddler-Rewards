@@ -7,6 +7,7 @@ import {
   Zap, Image as ImageIcon,
   BookOpen, Heart, Music, PartyPopper, Rocket, Pin
 } from 'lucide-react';
+import { ConfettiSystem, type ConfettiHandle } from './Confetti';
 import { initializeApp } from 'firebase/app';
 import { getAuth, signInAnonymously, onAuthStateChanged } from 'firebase/auth';
 import {
@@ -325,7 +326,6 @@ const GoalListItem = ({ behavior, onUpdate, onClaim, onDelete, onEdit }: any) =>
   const totalStars = behavior.goal;
   const isComplete = currentStars >= totalStars;
   const [localFeedback, setLocalFeedback] = React.useState<{ visible: boolean, message: string } | null>(null);
-  const [particles, setParticles] = React.useState<{ id: number, color: string, angle: number, dist: number, size: number, shape: string }[]>([]);
 
   const handleAddStar = (e: React.MouseEvent) => {
     onUpdate(behavior, 1, e);
@@ -334,19 +334,6 @@ const GoalListItem = ({ behavior, onUpdate, onClaim, onDelete, onEdit }: any) =>
       setLocalFeedback({ visible: true, message: `${remaining} LEFT!` });
       setTimeout(() => setLocalFeedback(null), 2000);
     }
-
-    // Confetti Burst - App Colors
-    const colors = ['#ec4899', '#a855f7', '#3b82f6', '#22c55e', '#eab308', '#ef4444', '#06b6d4'];
-    const newParticles = [...Array(30)].map((_, i) => ({
-      id: Date.now() + i,
-      color: colors[i % colors.length],
-      angle: Math.random() * 360,
-      dist: 50 + Math.random() * 80,
-      size: 4 + Math.random() * 6,
-      shape: Math.random() > 0.5 ? '50%' : '2px' // Circle or Rounded Square
-    }));
-    setParticles(prev => [...prev, ...newParticles]);
-    setTimeout(() => setParticles([]), 800);
   };
 
   // Colorful gradients for different behaviors
@@ -448,23 +435,6 @@ const GoalListItem = ({ behavior, onUpdate, onClaim, onDelete, onEdit }: any) =>
               onClick={handleAddStar}
               className={`w-full group relative bg-gradient-to-r ${gradient} text-white px-5 py-4 rounded-2xl font-black ${shadowColor} active:shadow-none active:translate-y-[6px] transition-all flex items-center justify-center gap-3 border-2 border-white/20 overflow-visible`}
             >
-              {/* Confetti Particles */}
-              {particles.map((p) => (
-                <div
-                  key={p.id}
-                  className="absolute pointer-events-none animate-confetti-pop"
-                  style={{
-                    backgroundColor: p.color,
-                    width: p.size,
-                    height: p.size,
-                    borderRadius: p.shape,
-                    left: '50%',
-                    top: '50%',
-                    '--angle': `${p.angle}deg`,
-                    '--dist': `${p.dist}px`,
-                  } as React.CSSProperties}
-                />
-              ))}
               <Star size={24} fill="currentColor" className="text-yellow-300 group-hover:rotate-12 transition-transform" />
               <span className="text-lg uppercase tracking-wider drop-shadow-sm">Add Star</span>
             </button>
@@ -494,20 +464,14 @@ const GoalListItem = ({ behavior, onUpdate, onClaim, onDelete, onEdit }: any) =>
 };
 
 // --- MODAL COMPONENTS ---
+
 const Confetti = ({ active }: { active: boolean }) => {
+  // This Confetti component is now deprecated/unused as ConfettiSystem is used directly in App.
+  // Keeping it here for context but it will be removed or replaced.
   if (!active) return null;
   return (
     <div className="fixed inset-0 pointer-events-none z-[100] overflow-hidden">
-      {[...Array(50)].map((_, i) => (
-        <div key={i} className="absolute animate-explode"
-          style={{
-            left: '50%', top: '50%',
-            width: '8px', height: '8px',
-            backgroundColor: ['#FFD700', '#FF0000', '#00FF00', '#0000FF'][i % 4],
-            transform: `rotate(${Math.random() * 360}deg) translate(${Math.random() * 300}px) rotate(${Math.random() * 360}deg)`
-          }}
-        />
-      ))}
+      {/* This content will be replaced by ConfettiSystem */}
     </div>
   );
 };
@@ -1006,7 +970,7 @@ export default function App() {
   const [editingGrandPrize, setEditingGrandPrize] = useState<any>(null);
   const [newPrize, setNewPrize] = useState('');
   const [_animateBar, setAnimateBar] = useState(false);
-  const [starClicks, setStarClicks] = useState<{ id: number, x: number, y: number }[]>([]);
+  const confettiRef = useRef<ConfettiHandle>(null); // Ref for ConfettiSystem
 
   // Auth & Data
   useEffect(() => {
@@ -1064,17 +1028,13 @@ export default function App() {
   const handleLogin = (code: string) => { localStorage.setItem('family_id', code); setFamilyId(code); };
   const handleLogout = () => { if (confirm("Sign out?")) { localStorage.removeItem('family_id'); setFamilyId(null); setBehaviors([]); } };
 
-  const triggerStarBurst = (e: React.MouseEvent) => {
-    const newClick = { id: Date.now(), x: e.clientX, y: e.clientY };
-    setStarClicks(prev => [...prev, newClick]);
-    setTimeout(() => {
-      setStarClicks(prev => prev.filter(c => c.id !== newClick.id));
-    }, 1000);
-  };
-
-  const updateCount = async (behavior: any, delta: number, event?: React.MouseEvent) => {
+  const updateCount = async (behavior: any, delta: number, e?: React.MouseEvent) => {
     if (!familyId) return;
-    if (delta > 0 && event) { triggerStarBurst(event); }
+    if (e && delta > 0) {
+      if (confettiRef.current) confettiRef.current.burst(e.clientX, e.clientY);
+      // SOUNDS.star(); // Handled locally or here? Local is better for immediate feedback but global is fine.
+      // Actually GoalListItem calls onUpdate which calls this.
+    }
     const newCount = Math.max(0, (behavior.count || 0) + delta);
     if (delta > 0 && newCount > behavior.goal) return;
 
@@ -1286,15 +1246,6 @@ export default function App() {
       <div className="fixed inset-0 bg-[radial-gradient(circle_at_top_left,_var(--tw-gradient-stops))] from-slate-900 via-slate-950 to-black pointer-events-none"></div>
       <Confetti active={showConfetti} />
 
-      {starClicks.map((click) => (
-        <div key={click.id} className="fixed pointer-events-none z-[60]" style={{ left: click.x, top: click.y }}>
-          {[...Array(12)].map((_, i) => (
-            <div key={i} className="absolute w-6 h-6 text-yellow-300 fill-yellow-300 animate-star-particle-enhanced" style={{ '--angle': `${i * 30}deg`, '--dist': `${60 + Math.random() * 40}px`, '--scale': 0.6 + Math.random() * 0.8 } as any}>
-              <Star size={24} fill="currentColor" />
-            </div>
-          ))}
-        </div>
-      ))}
 
       <GrandCelebrationOverlay
         visible={showGrandCelebration}
@@ -1598,6 +1549,8 @@ export default function App() {
           </div>
         )}
       </div>
+      {/* Global Confetti System */}
+      <ConfettiSystem ref={confettiRef} />
       <style>{`
         @keyframes explode { 0% { transform: scale(1); opacity: 1; } 100% { transform: scale(20); opacity: 0; } }
         .animate-explode { animation: explode 1s ease-out forwards; }
