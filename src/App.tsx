@@ -325,7 +325,7 @@ const GoalListItem = ({ behavior, onUpdate, onClaim, onDelete, onEdit }: any) =>
   const totalStars = behavior.goal;
   const isComplete = currentStars >= totalStars;
   const [localFeedback, setLocalFeedback] = React.useState<{ visible: boolean, message: string } | null>(null);
-  const [particles, setParticles] = React.useState<{ id: number, color: string, angle: number, dist: number }[]>([]);
+  const [particles, setParticles] = React.useState<{ id: number, color: string, angle: number, dist: number, size: number }[]>([]);
 
   const handleAddStar = (e: React.MouseEvent) => {
     onUpdate(behavior, 1, e);
@@ -335,12 +335,14 @@ const GoalListItem = ({ behavior, onUpdate, onClaim, onDelete, onEdit }: any) =>
       setTimeout(() => setLocalFeedback(null), 2000);
     }
 
-    // Confetti Burst
-    const newParticles = [...Array(12)].map((_, i) => ({
+    // Confetti Burst - App Colors
+    const colors = ['#ec4899', '#a855f7', '#3b82f6', '#22c55e', '#eab308', '#ef4444', '#06b6d4'];
+    const newParticles = [...Array(20)].map((_, i) => ({
       id: Date.now() + i,
-      color: ['#FCD34D', '#F472B6', '#60A5FA', '#34D399'][i % 4],
+      color: colors[i % colors.length],
       angle: Math.random() * 360,
-      dist: 60 + Math.random() * 40
+      dist: 80 + Math.random() * 50,
+      size: 4 + Math.random() * 4
     }));
     setParticles(prev => [...prev, ...newParticles]);
     setTimeout(() => setParticles([]), 1000);
@@ -449,14 +451,15 @@ const GoalListItem = ({ behavior, onUpdate, onClaim, onDelete, onEdit }: any) =>
               {particles.map((p) => (
                 <div
                   key={p.id}
-                  className="absolute w-3 h-3 rounded-full pointer-events-none animate-star-particle-enhanced"
+                  className="absolute rounded-sm pointer-events-none animate-confetti-pop"
                   style={{
                     backgroundColor: p.color,
+                    width: p.size || 6,
+                    height: p.size || 6,
                     left: '50%',
                     top: '50%',
                     '--angle': `${p.angle}deg`,
                     '--dist': `${p.dist}px`,
-                    '--scale': 0
                   } as React.CSSProperties}
                 />
               ))}
@@ -1598,8 +1601,14 @@ export default function App() {
         .animate-explode { animation: explode 1s ease-out forwards; }
         .scrollbar-hide::-webkit-scrollbar { display: none; }
         .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
-        @keyframes starParticleEnhanced { 0% { transform: translate(0,0) scale(0.5) rotate(0deg); opacity: 1; } 100% { transform: translate(calc(cos(var(--angle)) * var(--dist)), calc(sin(var(--angle)) * var(--dist))) scale(var(--scale)) rotate(360deg); opacity: 0; } }
+        @keyframes starParticleEnhanced { 0% { transform: translate(0,0) scale(0.5) rotate(0deg); opacity: 1; } 100% { transform: translate(calc(cos(var(--angle)) * var(--dist)), calc(sin(var(--angle)) * var(--dist))) scale(0) rotate(360deg); opacity: 0; } }
         .animate-star-particle-enhanced { animation: starParticleEnhanced 1.2s ease-out forwards; }
+        @keyframes confettiPop { 
+          0% { transform: translate(-50%, -50%) scale(0); opacity: 1; } 
+          50% { opacity: 1; }
+          100% { transform: translate(calc(cos(var(--angle)) * var(--dist) - 50%), calc(sin(var(--angle)) * var(--dist) - 50%)) scale(1) rotate(720deg); opacity: 0; } 
+        }
+        .animate-confetti-pop { animation: confettiPop 0.6s cubic-bezier(0.25, 1, 0.5, 1) forwards; }
         @keyframes shimmer { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
         .animate-shimmer { animation: shimmer 3s infinite; }
         @keyframes confetti-fall { 0% { transform: translateY(0) rotate(0deg); opacity: 1; } 100% { transform: translateY(100vh) rotate(720deg); opacity: 0; } }
