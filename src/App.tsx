@@ -325,6 +325,7 @@ const GoalListItem = ({ behavior, onUpdate, onClaim, onDelete, onEdit }: any) =>
   const totalStars = behavior.goal;
   const isComplete = currentStars >= totalStars;
   const [localFeedback, setLocalFeedback] = React.useState<{ visible: boolean, message: string } | null>(null);
+  const [particles, setParticles] = React.useState<{ id: number, color: string, angle: number, dist: number }[]>([]);
 
   const handleAddStar = (e: React.MouseEvent) => {
     onUpdate(behavior, 1, e);
@@ -333,6 +334,16 @@ const GoalListItem = ({ behavior, onUpdate, onClaim, onDelete, onEdit }: any) =>
       setLocalFeedback({ visible: true, message: `${remaining} LEFT!` });
       setTimeout(() => setLocalFeedback(null), 2000);
     }
+
+    // Confetti Burst
+    const newParticles = [...Array(12)].map((_, i) => ({
+      id: Date.now() + i,
+      color: ['#FCD34D', '#F472B6', '#60A5FA', '#34D399'][i % 4],
+      angle: Math.random() * 360,
+      dist: 60 + Math.random() * 40
+    }));
+    setParticles(prev => [...prev, ...newParticles]);
+    setTimeout(() => setParticles([]), 1000);
   };
 
   // Colorful gradients for different behaviors
@@ -398,9 +409,9 @@ const GoalListItem = ({ behavior, onUpdate, onClaim, onDelete, onEdit }: any) =>
           {/* Local Popup Overlay */}
           {localFeedback?.visible && (
             <div className="absolute inset-0 z-50 flex items-center justify-center pointer-events-none -mt-12">
-              <div className="bg-white text-slate-900 px-6 py-3 rounded-full font-black shadow-[0_10px_40px_rgba(0,0,0,0.5)] animate-bounce-in flex items-center gap-2 border-4 border-yellow-400 scale-110 rotate-[-2deg]">
-                <span className="text-2xl">⭐</span>
-                <span className="text-xl tracking-black">{localFeedback.message}</span>
+              <div className="bg-white text-slate-900 px-6 py-3 rounded-full font-black shadow-[0_10px_40px_rgba(0,0,0,0.5)] animate-bounce-in flex items-center gap-2 border-4 border-yellow-400 scale-110 rotate-[-2deg] transition-all">
+                <span className="text-3xl animate-spin-slow">⭐</span>
+                <span className="text-2xl tracking-black animate-pulse">{localFeedback.message}</span>
                 <div className="absolute inset-0 overflow-hidden rounded-full">
                   <div className="absolute top-0 left-1/4 w-2 h-2 bg-red-500 rounded-full animate-ping"></div>
                   <div className="absolute bottom-0 right-1/4 w-2 h-2 bg-blue-500 rounded-full animate-ping delay-75"></div>
@@ -432,8 +443,23 @@ const GoalListItem = ({ behavior, onUpdate, onClaim, onDelete, onEdit }: any) =>
           ) : (
             <button
               onClick={handleAddStar}
-              className={`w-full group relative bg-gradient-to-r ${gradient} text-white px-5 py-4 rounded-2xl font-black ${shadowColor} active:shadow-none active:translate-y-[6px] transition-all flex items-center justify-center gap-3 border-2 border-white/20`}
+              className={`w-full group relative bg-gradient-to-r ${gradient} text-white px-5 py-4 rounded-2xl font-black ${shadowColor} active:shadow-none active:translate-y-[6px] transition-all flex items-center justify-center gap-3 border-2 border-white/20 overflow-visible`}
             >
+              {/* Confetti Particles */}
+              {particles.map((p) => (
+                <div
+                  key={p.id}
+                  className="absolute w-3 h-3 rounded-full pointer-events-none animate-star-particle-enhanced"
+                  style={{
+                    backgroundColor: p.color,
+                    left: '50%',
+                    top: '50%',
+                    '--angle': `${p.angle}deg`,
+                    '--dist': `${p.dist}px`,
+                    '--scale': 0
+                  } as React.CSSProperties}
+                />
+              ))}
               <Star size={24} fill="currentColor" className="text-yellow-300 group-hover:rotate-12 transition-transform" />
               <span className="text-lg uppercase tracking-wider drop-shadow-sm">Add Star</span>
             </button>
