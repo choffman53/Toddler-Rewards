@@ -67,7 +67,7 @@ export const Onboarding = ({ onLogin }: OnboardingProps) => {
 
             <div className="relative z-10 max-w-md w-full text-center space-y-8">
                 {/* Logo / Icon */}
-                <div className="relative w-32 h-32 mx-auto mb-8 animate-float-slow">
+                <div className="relative w-48 h-48 mx-auto mb-8 animate-float-slow">
                     <div className="absolute inset-0 bg-blue-500 blur-[60px] opacity-40 rounded-full animate-pulse"></div>
                     <img src="/mascot.png" alt="App Icon" className="w-full h-full object-contain drop-shadow-2xl relative z-10" />
                 </div>
