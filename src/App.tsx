@@ -1495,7 +1495,12 @@ export default function App() {
                     setLoading(true);
                     try {
                       const prompt = `List 5 age-appropriate chores or behavioral goals for a toddler (ages 2-5). Return a JSON array of objects with keys: "name" (short title, max 4 words), "icon" (one of: star, smile, heart, zap, moon, sun, utensils, trophy, award, gift), "goal" (recommended stars number 3-8). Output ONLY valid JSON.`;
-                      const API_KEY = 'AIzaSyAeh-80GdDcfh8MzgE_rd3AvC0OHUr2sog';
+                      const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
+                      if (!API_KEY) {
+                        alert("Missing API Key! Please create a .env file with VITE_GEMINI_API_KEY=your_key");
+                        setLoading(false);
+                        return;
+                      }
 
                       const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${API_KEY}`, {
                         method: 'POST',
