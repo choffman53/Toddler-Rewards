@@ -934,7 +934,8 @@ export default function App() {
         { id: 4, name: 'Zoo Trip', goal: 30, active: true, timesClaimed: 0, imageUrl: '/prize-4.jpg' }
       ],
       wheelPrizes: ['Sticker', 'Treat', 'Story', 'Hug', 'Song'],
-      spentPoints: 0
+      spentPoints: 0,
+      geminiApiKey: ''
     };
   });
 
@@ -1351,6 +1352,29 @@ export default function App() {
                 </button>
               </div>
             </div>
+
+            {/* AI Settings */}
+            <div className="bg-slate-900 p-6 rounded-3xl border border-white/10 mb-8">
+              <h3 className="text-white font-black text-xl mb-4 flex items-center gap-2">
+                <Sparkles className="text-purple-400" /> AI Configuration
+              </h3>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Gemini API Key</label>
+                  <input
+                    type="password"
+                    value={settings.geminiApiKey || ''}
+                    onChange={e => setSettings({ ...settings, geminiApiKey: e.target.value })}
+                    placeholder="Paste your API Key here"
+                    className="w-full p-4 bg-slate-950 rounded-xl border border-white/10 text-white placeholder:text-slate-700 focus:border-purple-500 outline-none font-mono text-sm"
+                  />
+                  <p className="text-[10px] text-slate-500 mt-2">
+                    Required for Smart Suggestions. Get one at <a href="https://aistudio.google.com/app/apikey" target="_blank" className="text-purple-400 underline">aistudio.google.com</a>
+                  </p>
+                </div>
+              </div>
+            </div>
+
             <div className="bg-slate-900 rounded-3xl border border-white/10 p-6 shadow-lg">
               <h3 className="font-bold text-purple-400 mb-4 flex items-center gap-2 uppercase tracking-wider text-xs"><Gift size={16} /> Grand Prizes</h3>
               <div className="space-y-3 mb-6">
@@ -1475,10 +1499,82 @@ export default function App() {
           </div>
         ) : (
           <div className="p-4 max-w-md mx-auto">
-            <div className="flex items-center gap-2 mb-6">
-              <button onClick={() => setView('dashboard')} className="p-2 hover:bg-slate-800 rounded-full text-slate-400"><ChevronRight className="rotate-180" /></button>
-              <h2 className="text-xl font-bold text-white">{editingId ? 'Edit' : 'New'} Goal</h2>
+            <div className="flex items-center justify-between mb-8">
+              <button onClick={() => setView('dashboard')} className="p-3 bg-slate-800 rounded-full text-white hover:bg-slate-700 transition-colors">
+                <ChevronRight className="rotate-180" />
+              </button>
+              <h2 className="text-2xl font-black text-white">{editingId ? 'Edit Goal' : 'New Goal'}</h2>
+              <div className="w-12"></div>
             </div>
+
+            {/* AI Suggestion Button */}
+            {!editingId && settings.geminiApiKey && (
+              <div className="mb-8">
+                <button
+                  onClick={async () => {
+                    if (_loading) return;
+                    setLoading(true);
+                    try {
+                      const prompt = `List 5 age-appropriate chores or behavioral goals for a toddler (ages 2-5). Return a JSON array of objects with keys: "name" (short title, max 4 words), "icon" (one of: star, smile, heart, zap, moon, sun, utensils, trophy, award, gift), "goal" (recommended stars number 3-8). Output ONLY valid JSON.`;
+
+                      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${settings.geminiApiKey}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+                      });
+
+                      const data = await response.json();
+                      const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+                      if (text) {
+                        // Extract JSON from markdown code blocks if present
+                        const jsonMatch = text.match(/\[[\s\S]*\]/);
+                        const jsonStr = jsonMatch ? jsonMatch[0] : text;
+                        const suggestions = JSON.parse(jsonStr);
+
+                        // Show suggestions (using a temporary alert/confirm for MVP, or better: set a state to display them)
+                        // For now, let's pick a random one to demo, or better, add a "Suggestions" UI state.
+                        // Let's add a simple suggestions list below this button.
+                        setFeedback({ visible: true, message: 'Ideas Generated!', type: 'suggestions', data: suggestions });
+                      }
+                    } catch (e) {
+                      console.error(e);
+                      alert("Failed to generate ideas. Check your API Key.");
+                    } finally {
+                      setLoading(false);
+                    }
+                  }}
+                  className="w-full bg-gradient-to-r from-purple-500 to-indigo-600 text-white p-4 rounded-2xl font-black shadow-lg flex items-center justify-center gap-2 hover:scale-[1.02] transition-transform"
+                >
+                  {_loading ? <span className="animate-spin">⏳</span> : <Sparkles size={20} className="text-yellow-300" />}
+                  <span>{_loading ? 'Thinking...' : 'Ask AI for Ideas'}</span>
+                </button>
+
+                {/* Suggestions List */}
+                {feedback.type === 'suggestions' && (
+                  <div className="mt-4 grid grid-cols-1 gap-2 animate-in slide-in-from-top">
+                    {feedback.data.map((s: any, i: number) => (
+                      <button
+                        key={i}
+                        onClick={() => {
+                          setFormData({ name: s.name, goal: s.goal, icon: s.icon, colorIndex: Math.floor(Math.random() * 5) });
+                          setFeedback({ visible: false });
+                        }}
+                        className="bg-slate-800 p-3 rounded-xl text-left flex items-center gap-3 hover:bg-slate-700 transition-colors border border-white/5"
+                      >
+                        <div className="p-2 bg-slate-900 rounded-lg text-xl">
+                          {s.icon === 'star' ? '⭐' : s.icon === 'heart' ? '❤️' : s.icon === 'utensils' ? '🍽️' : '✨'}
+                        </div>
+                        <div>
+                          <div className="font-bold text-white text-sm">{s.name}</div>
+                          <div className="text-slate-400 text-xs">{s.goal} Stars</div>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
             <div className="space-y-4 bg-slate-900 p-6 rounded-3xl border border-white/10">
               <div>
                 <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Name</label>
