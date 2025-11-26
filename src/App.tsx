@@ -65,7 +65,7 @@ const playTone = (freq: number, type: OscillatorType, duration: number) => {
   osc.stop(audioCtx.currentTime + duration);
 };
 const SOUNDS = {
-  star: () => { if (audioCtx?.state === 'suspended') audioCtx.resume(); playTone(880, 'sine', 0.1); },
+  star: () => { if (audioCtx?.state === 'suspended') audioCtx.resume();[523, 659, 783].forEach((f, i) => setTimeout(() => playTone(f, 'sine', 0.15), i * 50)); },
   success: () => { if (audioCtx?.state === 'suspended') audioCtx.resume();[440, 554, 659].forEach((f, i) => setTimeout(() => playTone(f, 'triangle', 0.3), i * 100)); },
   grand: () => { if (audioCtx?.state === 'suspended') audioCtx.resume();[523, 659, 783, 1046].forEach((f, i) => setTimeout(() => playTone(f, 'square', 0.4), i * 150)); },
   pop: () => { if (audioCtx?.state === 'suspended') audioCtx.resume(); playTone(400, 'sine', 0.1); },
@@ -1289,9 +1289,6 @@ export default function App() {
           <div>
             <h1 className="font-black text-xl text-white tracking-tight">Hello, {familyId}!</h1>
             <div className="flex items-center gap-2">
-              <span className="bg-yellow-400 text-slate-900 text-xs font-black px-2 py-0.5 rounded-md shadow-sm">
-                {totalRewards} Points
-              </span>
             </div>
           </div>
         </div>
@@ -1492,7 +1489,7 @@ export default function App() {
               <div>
                 <div className="flex justify-between items-baseline mb-2">
                   <label className="block text-xs font-bold text-slate-500 uppercase">Stars Required</label>
-                  <span className="text-[10px] text-slate-400 font-medium">Require more stars for more challenging goals</span>
+                  <span className="text-[10px] text-slate-400 font-medium">Require more stars for easier tasks</span>
                 </div>
                 <div className="flex items-center gap-4 bg-slate-950 p-4 rounded-xl border border-white/10">
                   <input type="range" min="3" max="10" value={formData.goal} onChange={e => setFormData({ ...formData, goal: parseInt(e.target.value) })} className="flex-1 accent-blue-500" />
