@@ -329,8 +329,13 @@ const GoalListItem = ({ behavior, onUpdate, onClaim, onDelete, onEdit }: any) =>
   const totalStars = behavior.goal;
   const isComplete = currentStars >= totalStars;
   const [localFeedback, setLocalFeedback] = React.useState<{ visible: boolean, message: string } | null>(null);
+  const [processing, setProcessing] = React.useState(false);
 
   const handleAddStar = (e: React.MouseEvent) => {
+    if (processing) return;
+    setProcessing(true);
+    setTimeout(() => setProcessing(false), 500);
+
     onUpdate(behavior, 1, e);
     const remaining = behavior.goal - (currentStars + 1);
     if (remaining > 0) {
@@ -436,7 +441,8 @@ const GoalListItem = ({ behavior, onUpdate, onClaim, onDelete, onEdit }: any) =>
           ) : (
             <button
               onClick={handleAddStar}
-              className={`w-full group relative bg-gradient-to-r ${gradient} text-white px-5 py-4 rounded-2xl font-black ${shadowColor} active:shadow-none active:translate-y-[6px] transition-all flex items-center justify-center gap-3 border-2 border-white/20 overflow-visible`}
+              disabled={processing}
+              className={`w-full group relative bg-gradient-to-r ${gradient} text-white px-5 py-4 rounded-2xl font-black ${shadowColor} active:shadow-none active:translate-y-[6px] transition-all flex items-center justify-center gap-3 border-2 border-white/20 overflow-visible ${processing ? 'opacity-80 cursor-wait' : ''}`}
             >
               <Star size={24} fill="currentColor" className="text-yellow-300 group-hover:rotate-12 transition-transform" />
               <span className="text-lg uppercase tracking-wider drop-shadow-sm">Add Star</span>
@@ -1001,7 +1007,12 @@ export default function App() {
   }, [familyId]);
 
   const totalRewards = useMemo(() => {
-    return behaviors.reduce((acc, b) => acc + (b.completions || 0) + (b.count >= b.goal ? 1 : 0), 0);
+    return behaviors.reduce((acc, b) => {
+      const lifetime = b.lifetimeStars || 0;
+      const bonus = (b.completions || 0) * b.goal;
+      const pendingBonus = (b.count >= b.goal ? b.goal : 0);
+      return acc + lifetime + bonus + pendingBonus;
+    }, 0);
   }, [behaviors]);
 
 
@@ -1479,7 +1490,10 @@ export default function App() {
                 <input className="w-full p-4 bg-slate-950 rounded-xl border border-white/10 text-lg text-white placeholder:text-slate-600 focus:border-blue-500 outline-none" placeholder="e.g. Clean Room" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
               </div>
               <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Stars Required</label>
+                <div className="flex justify-between items-baseline mb-2">
+                  <label className="block text-xs font-bold text-slate-500 uppercase">Stars Required</label>
+                  <span className="text-[10px] text-slate-400 font-medium">Require more stars for more challenging goals</span>
+                </div>
                 <div className="flex items-center gap-4 bg-slate-950 p-4 rounded-xl border border-white/10">
                   <input type="range" min="3" max="10" value={formData.goal} onChange={e => setFormData({ ...formData, goal: parseInt(e.target.value) })} className="flex-1 accent-blue-500" />
                   <span className="font-black text-2xl text-blue-400 w-10 text-center">{formData.goal}</span>
