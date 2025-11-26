@@ -112,7 +112,7 @@ const NextPrizeCard = ({ totalRewards, settings }: any) => {
   const prizesWithProgress = settings.grandPrizes
     .filter((p: any) => p.active)
     .map((p: any) => {
-      const currentProgress = totalRewards - (p.lastClaimedAt || 0);
+      const currentProgress = Math.max(0, totalRewards - (p.lastClaimedAt || 0));
       const canClaim = currentProgress >= p.goal;
       const progress = Math.min(100, (currentProgress / p.goal) * 100);
       return { ...p, currentProgress, canClaim, progress, pointsNeeded: Math.max(0, p.goal - currentProgress) };
@@ -214,7 +214,7 @@ const GiftBoxSection = ({ prizes, totalRewards, onClaimPrize, onFeature, feature
       <div className="flex gap-4 overflow-x-auto py-8 scrollbar-hide -mx-4 px-4 snap-x">
         {sortedPrizes.map((p: any, i: number) => {
           const timesClaimed = p.timesClaimed || 0;
-          const currentProgress = totalRewards - (p.lastClaimedAt || 0);
+          const currentProgress = Math.max(0, totalRewards - (p.lastClaimedAt || 0));
           const isMet = currentProgress >= p.goal;
           const progress = Math.min(100, (currentProgress / p.goal) * 100);
           const gradient = GRADIENTS[i % GRADIENTS.length];
@@ -1282,7 +1282,7 @@ export default function App() {
       <header className="bg-transparent p-6 pt-[calc(1.5rem+env(safe-area-inset-top))] flex justify-between items-center relative z-10">
         <div className="flex items-center gap-3">
           <div className="w-14 h-14 rounded-2xl overflow-hidden shadow-lg cursor-pointer hover:opacity-80 transition-opacity" onClick={handleLogout}>
-            <img src="/avatar.png" alt="avatar" className="w-full h-full object-cover" />
+            <img src="/mascot.png" alt="avatar" className="w-full h-full object-cover" />
           </div>
           <div>
             <h1 className="font-black text-xl text-white tracking-tight">Hello, {familyId}!</h1>
