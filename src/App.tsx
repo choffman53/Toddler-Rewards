@@ -1504,21 +1504,31 @@ export default function App() {
                       });
 
                       const data = await response.json();
+                      if (data.error) {
+                        throw new Error(data.error.message);
+                      }
                       const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
                       if (text) {
                         // Extract JSON from markdown code blocks if present
                         const jsonMatch = text.match(/\[[\s\S]*\]/);
                         const jsonStr = jsonMatch ? jsonMatch[0] : text;
-                        const suggestions = JSON.parse(jsonStr);
+                        try {
+                          const suggestions = JSON.parse(jsonStr);
 
-                        // Show suggestions (using a temporary alert/confirm for MVP, or better: set a state to display them)
-                        // For now, let's pick a random one to demo, or better, add a "Suggestions" UI state.
-                        // Let's add a simple suggestions list below this button.
-                        setFeedback({ visible: true, message: 'Ideas Generated!', type: 'suggestions', data: suggestions });
+                          // Show suggestions (using a temporary alert/confirm for MVP, or better: set a state to display them)
+                          // For now, let's pick a random one to demo, or better, add a "Suggestions" UI state.
+                          // Let's add a simple suggestions list below this button.
+                          setFeedback({ visible: true, message: 'Ideas Generated!', type: 'suggestions', data: suggestions });
+                        } catch (e) {
+                          console.error("JSON Parse Error:", e, text);
+                          alert("AI returned invalid data. Try again.");
+                        }
+                      } else {
+                        alert("No suggestions returned.");
                       }
-                    } catch (e) {
+                    } catch (e: any) {
                       console.error(e);
-                      alert("Failed to generate ideas. Check your API Key.");
+                      alert(`Error: ${e.message}`);
                     } finally {
                       setLoading(false);
                     }
