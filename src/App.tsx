@@ -1005,6 +1005,21 @@ export default function App() {
   }, [behaviors]);
   const totalStars = useMemo(() => behaviors.reduce((acc, b) => acc + (b.lifetimeStars || 0), 0), [behaviors]);
 
+  // Migration: Fix lastClaimedAt if it exceeds totalRewards (due to unit change)
+  useEffect(() => {
+    if (!settings.grandPrizes) return;
+    const needsFix = settings.grandPrizes.some((p: any) => (p.lastClaimedAt || 0) > totalRewards);
+    if (needsFix) {
+      const fixedPrizes = settings.grandPrizes.map((p: any) =>
+        (p.lastClaimedAt || 0) > totalRewards ? { ...p, lastClaimedAt: totalRewards } : p
+      );
+      setSettings((prev: any) => ({ ...prev, grandPrizes: fixedPrizes }));
+      if (db && familyId) {
+        updateDoc(doc(db, 'families', familyId, 'config', 'main'), { grandPrizes: fixedPrizes });
+      }
+    }
+  }, [totalRewards, settings.grandPrizes, db, familyId]);
+
   const prevTotal = useRef(totalRewards);
   useEffect(() => {
     if (totalRewards > prevTotal.current) { setAnimateBar(true); setTimeout(() => setAnimateBar(false), 1000); }
@@ -1262,13 +1277,10 @@ export default function App() {
           </div>
           <div>
             <h1 className="font-black text-xl text-white tracking-tight">Hello, {familyId}!</h1>
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-1 text-xs font-bold text-green-400">
-                Level {Math.floor(totalStars / 50) + 1} <Zap size={10} fill="currentColor" />
-              </div>
-              <div className="flex items-center gap-1 text-xs font-bold text-blue-400">
-                {totalRewards} Points <Star size={10} fill="currentColor" />
-              </div>
+            <div className="flex items-center gap-2">
+              <span className="bg-yellow-400 text-slate-900 text-xs font-black px-2 py-0.5 rounded-md shadow-sm">
+                {totalRewards} Points
+              </span>
             </div>
           </div>
         </div>
