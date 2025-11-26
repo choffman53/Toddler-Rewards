@@ -1001,10 +1001,8 @@ export default function App() {
   }, [familyId]);
 
   const totalRewards = useMemo(() => {
-    const earned = behaviors.reduce((acc, b) => acc + (b.lifetimeStars || 0), 0);
-    const spent = settings.spentPoints || 0;
-    return Math.max(0, earned - spent);
-  }, [behaviors, settings.spentPoints]);
+    return behaviors.reduce((acc, b) => acc + (b.lifetimeStars || 0), 0);
+  }, [behaviors]);
   const totalStars = useMemo(() => behaviors.reduce((acc, b) => acc + (b.lifetimeStars || 0), 0), [behaviors]);
 
   const prevTotal = useRef(totalRewards);
@@ -1021,52 +1019,30 @@ export default function App() {
     if (!familyId) return;
     if (e && delta > 0) {
       if (confettiRef.current) confettiRef.current.burst(e.clientX, e.clientY);
-      // SOUNDS.star(); // Handled locally or here? Local is better for immediate feedback but global is fine.
-      // Actually GoalListItem calls onUpdate which calls this.
     }
     const newCount = Math.max(0, (behavior.count || 0) + delta);
     if (delta > 0 && newCount > behavior.goal) return;
 
     if (delta > 0 && newCount === behavior.goal) {
       SOUNDS.success();
-      // Just show a simple success message for earning a point
       setFeedback({ visible: true, message: 'Goal Reached! 🎉' });
       setTimeout(() => setFeedback({ visible: false }), 2000);
 
-      // Update locally if no Firebase
       if (!db) {
-        setBehaviors(behaviors.map(b =>
-          b.id === behavior.id
-            ? { ...b, count: newCount } // Keep it at max (don't reset yet)
-            : b
-        ));
+        setBehaviors(behaviors.map(b => b.id === behavior.id ? { ...b, count: newCount, lifetimeStars: (b.lifetimeStars || 0) + 1 } : b));
       } else {
-        await updateDoc(doc(db, 'families', familyId, 'behaviors', behavior.id), { count: newCount });
+        await updateDoc(doc(db, 'families', familyId, 'behaviors', behavior.id), { count: newCount, lifetimeStars: increment(1) });
       }
     } else if (delta > 0) {
       SOUNDS.star();
-      // Feedback handled locally in GoalListItem
-      // setFeedback({ visible: true, message: 'Star Added! ⭐' });
-      // setTimeout(() => setFeedback({ visible: false }), 1500);
-
-      // Update locally if no Firebase
       if (!db) {
-        setBehaviors(behaviors.map(b =>
-          b.id === behavior.id
-            ? { ...b, count: newCount, lifetimeStars: (b.lifetimeStars || 0) + 1 }
-            : b
-        ));
+        setBehaviors(behaviors.map(b => b.id === behavior.id ? { ...b, count: newCount, lifetimeStars: (b.lifetimeStars || 0) + 1 } : b));
       } else {
         await updateDoc(doc(db, 'families', familyId, 'behaviors', behavior.id), { count: newCount, lifetimeStars: increment(1) });
       }
     } else {
-      // Update locally if no Firebase
       if (!db) {
-        setBehaviors(behaviors.map(b =>
-          b.id === behavior.id
-            ? { ...b, count: newCount }
-            : b
-        ));
+        setBehaviors(behaviors.map(b => b.id === behavior.id ? { ...b, count: newCount } : b));
       } else {
         await updateDoc(doc(db, 'families', familyId, 'behaviors', behavior.id), { count: newCount });
       }
