@@ -323,7 +323,7 @@ const FunStar = ({ filled, size = 32 }: { filled: boolean, size?: number }) => (
   </div>
 );
 
-const GoalListItem = ({ behavior, onUpdate, onClaim, onDelete, onEdit, nextPrizeName }: any) => {
+const GoalListItem = ({ behavior, onUpdate, onClaim, onDelete, onEdit }: any) => {
   const Icon = ICON_MAP[behavior.icon] || Star;
   const currentStars = behavior.count || 0;
   const totalStars = behavior.goal;
@@ -338,9 +338,11 @@ const GoalListItem = ({ behavior, onUpdate, onClaim, onDelete, onEdit, nextPrize
 
     onUpdate(behavior, 1, e);
 
-    // Show "+1 Point" feedback
-    setLocalFeedback({ visible: true, message: `+1 Point for ${nextPrizeName || 'Prize'}!` });
-    setTimeout(() => setLocalFeedback(null), 2000);
+    const remaining = behavior.goal - (currentStars + 1);
+    if (remaining > 0) {
+      setLocalFeedback({ visible: true, message: `${remaining} LEFT!` });
+      setTimeout(() => setLocalFeedback(null), 2000);
+    }
   };
 
   // Colorful gradients for different behaviors
@@ -1009,18 +1011,7 @@ export default function App() {
     return behaviors.reduce((acc, b) => acc + (b.lifetimeStars || 0), 0);
   }, [behaviors]);
 
-  // Calculate Next Prize for Feedback
-  const nextPrize = useMemo(() => {
-    if (!settings.grandPrizes) return null;
-    const prizesWithProgress = settings.grandPrizes
-      .filter((p: any) => p.active)
-      .map((p: any) => {
-        const currentProgress = Math.max(0, totalRewards - (p.lastClaimedAt || 0));
-        return { ...p, pointsNeeded: Math.max(0, p.goal - currentProgress) };
-      });
-    const featured = settings.featuredPrizeId ? prizesWithProgress.find((p: any) => p.id === settings.featuredPrizeId) : null;
-    return featured || prizesWithProgress.filter((p: any) => p.pointsNeeded > 0).sort((a: any, b: any) => a.pointsNeeded - b.pointsNeeded)[0] || prizesWithProgress[0];
-  }, [settings.grandPrizes, settings.featuredPrizeId, totalRewards]);
+
 
 
   // Migration: Fix lastClaimedAt if it exceeds totalRewards (due to unit change)
@@ -1332,7 +1323,6 @@ export default function App() {
                     onClaim={claimReward}
                     onDelete={deleteBehavior}
                     onEdit={(b: any) => { setEditingId(b.id); setFormData({ name: b.name, goal: b.goal, icon: b.icon, colorIndex: b.colorIndex }); setView('settings'); }}
-                    nextPrizeName={nextPrize?.name}
                   />
                 ))}
               </div>
