@@ -934,8 +934,7 @@ export default function App() {
         { id: 4, name: 'Zoo Trip', goal: 30, active: true, timesClaimed: 0, imageUrl: '/prize-4.jpg' }
       ],
       wheelPrizes: ['Sticker', 'Treat', 'Story', 'Hug', 'Song'],
-      spentPoints: 0,
-      geminiApiKey: ''
+      spentPoints: 0
     };
   });
 
@@ -1353,27 +1352,7 @@ export default function App() {
               </div>
             </div>
 
-            {/* AI Settings */}
-            <div className="bg-slate-900 p-6 rounded-3xl border border-white/10 mb-8">
-              <h3 className="text-white font-black text-xl mb-4 flex items-center gap-2">
-                <Sparkles className="text-purple-400" /> AI Configuration
-              </h3>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Gemini API Key</label>
-                  <input
-                    type="password"
-                    value={settings.geminiApiKey || ''}
-                    onChange={e => setSettings({ ...settings, geminiApiKey: e.target.value })}
-                    placeholder="Paste your API Key here"
-                    className="w-full p-4 bg-slate-950 rounded-xl border border-white/10 text-white placeholder:text-slate-700 focus:border-purple-500 outline-none font-mono text-sm"
-                  />
-                  <p className="text-[10px] text-slate-500 mt-2">
-                    Required for Smart Suggestions. Get one at <a href="https://aistudio.google.com/app/apikey" target="_blank" className="text-purple-400 underline">aistudio.google.com</a>
-                  </p>
-                </div>
-              </div>
-            </div>
+
 
             <div className="bg-slate-900 rounded-3xl border border-white/10 p-6 shadow-lg">
               <h3 className="font-bold text-purple-400 mb-4 flex items-center gap-2 uppercase tracking-wider text-xs"><Gift size={16} /> Grand Prizes</h3>
@@ -1508,7 +1487,7 @@ export default function App() {
             </div>
 
             {/* AI Suggestion Button */}
-            {!editingId && settings.geminiApiKey && (
+            {!editingId && (
               <div className="mb-8">
                 <button
                   onClick={async () => {
@@ -1516,8 +1495,9 @@ export default function App() {
                     setLoading(true);
                     try {
                       const prompt = `List 5 age-appropriate chores or behavioral goals for a toddler (ages 2-5). Return a JSON array of objects with keys: "name" (short title, max 4 words), "icon" (one of: star, smile, heart, zap, moon, sun, utensils, trophy, award, gift), "goal" (recommended stars number 3-8). Output ONLY valid JSON.`;
+                      const API_KEY = 'AIzaSyCILsjs5MphkvibRSFDLfzMMu_UtWrkgKk';
 
-                      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${settings.geminiApiKey}`, {
+                      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
