@@ -1001,7 +1001,7 @@ export default function App() {
   }, [familyId]);
 
   const totalRewards = useMemo(() => {
-    return behaviors.reduce((acc, b) => acc + (b.lifetimeStars || 0), 0);
+    return behaviors.reduce((acc, b) => acc + (b.completions || 0) + (b.count >= b.goal ? 1 : 0), 0);
   }, [behaviors]);
   const totalStars = useMemo(() => behaviors.reduce((acc, b) => acc + (b.lifetimeStars || 0), 0), [behaviors]);
 
