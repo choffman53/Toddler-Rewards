@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import {
   Rocket, Star, Gift, Plus, Trash2, Trophy, Settings, Sparkles,
   Lightbulb, Award, Utensils, Edit2, X, ToggleLeft, ToggleRight, ChevronRight,
-  Pizza, IceCream, Gamepad2, Palmtree, Clapperboard, Zap, Image as ImageIcon,
+  Pizza, IceCream, Gamepad2, Palmtree, Clapperboard, Image as ImageIcon,
   BookOpen, Heart, Music, PartyPopper, Pin, HelpCircle
 } from 'lucide-react';
 import { ConfettiSystem, type ConfettiHandle } from './Confetti';
@@ -1003,7 +1003,7 @@ export default function App() {
   const totalRewards = useMemo(() => {
     return behaviors.reduce((acc, b) => acc + (b.completions || 0) + (b.count >= b.goal ? 1 : 0), 0);
   }, [behaviors]);
-  const totalStars = useMemo(() => behaviors.reduce((acc, b) => acc + (b.lifetimeStars || 0), 0), [behaviors]);
+
 
   // Migration: Fix lastClaimedAt if it exceeds totalRewards (due to unit change)
   useEffect(() => {
