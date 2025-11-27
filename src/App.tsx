@@ -201,7 +201,25 @@ const NextPrizeCard = ({ totalRewards, settings, targetRef, scale = 1 }: any) =>
 
 // --- GIFT BOX SECTION (Carousel) ---
 const GiftBoxSection = ({ prizes, totalRewards, onClaimPrize, onFeature, featuredId }: any) => {
-  const sortedPrizes = [...(prizes || [])].sort((a, b) => a.goal - b.goal).filter(p => p.active);
+  const sortedPrizes = useMemo(() => {
+    return [...(prizes || [])]
+      .filter(p => p.active)
+      .sort((a, b) => {
+        const progressA = Math.max(0, totalRewards - (a.lastClaimedAt || 0));
+        const progressB = Math.max(0, totalRewards - (b.lastClaimedAt || 0));
+        const remainingA = Math.max(0, a.goal - progressA);
+        const remainingB = Math.max(0, b.goal - progressB);
+        const isReadyA = remainingA === 0;
+        const isReadyB = remainingB === 0;
+
+        // 1. Ready to claim first
+        if (isReadyA && !isReadyB) return -1;
+        if (!isReadyA && isReadyB) return 1;
+
+        // 2. Closest to completion (lowest remaining) first
+        return remainingA - remainingB;
+      });
+  }, [prizes, totalRewards]);
 
   return (
     <div className="mb-8">
