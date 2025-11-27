@@ -1,7 +1,7 @@
 // Force Vercel Rebuild
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import {
-  Rocket, Star, Gift, Plus, Trash2, Trophy, Settings, Sparkles,
+  Rocket, Star, Gift, Trash2, Trophy, Settings, Sparkles,
   Lightbulb, Award, Utensils, Edit2, X, ToggleLeft, ToggleRight,
   Pizza, IceCream, Gamepad2, Palmtree, Clapperboard, Image as ImageIcon,
   BookOpen, Heart, Music, PartyPopper, Pin, HelpCircle, Flame
@@ -945,7 +945,8 @@ export default function App() {
   }, [settings]);
 
   const [_loading, setLoading] = useState(false);
-  const [view, setView] = useState('dashboard');
+  const [view, setView] = useState<'dashboard' | 'settings'>('dashboard');
+  const [customPrompt, setCustomPrompt] = useState('');
 
   // UI State
   const [showWheel, setShowWheel] = useState(false);
@@ -1079,7 +1080,10 @@ export default function App() {
     setLoading(true);
     try {
       let prompt = '';
-      if (type === 'goal') prompt = `List 5 age-appropriate chores or behavioral goals for a toddler (ages 2-5). Return a JSON array of objects with keys: "name" (short title, max 4 words), "icon" (one of: star, smile, heart, zap, moon, sun, utensils, trophy, award, gift), "goal" (recommended stars number 3-8). Output ONLY valid JSON.`;
+      if (type === 'goal') {
+        const userContext = customPrompt.trim() ? `Focus on this area: "${customPrompt}". ` : '';
+        prompt = `${userContext}List 5 age-appropriate chores or behavioral goals for a toddler (ages 2-5). Return a JSON array of objects with keys: "name" (short title, max 4 words), "icon" (one of: star, smile, heart, zap, moon, sun, utensils, trophy, award, gift), "goal" (recommended stars number 3-8). Output ONLY valid JSON.`;
+      }
       if (type === 'grand_prize') prompt = `List 5 exciting 'Grand Prizes' for a toddler reward chart (e.g., Pizza Party, Zoo Trip, New Toy). Return a JSON array of objects with keys: "name" (short title), "goal" (points 10-50). Output ONLY valid JSON.`;
       if (type === 'egg_prize') prompt = `List 5 small, instant rewards for a 'Surprise Egg' (e.g., Sticker, Hug, 1 TV Show, Chocolate). Return a JSON array of strings. Output ONLY valid JSON.`;
 
@@ -1372,9 +1376,6 @@ export default function App() {
         </div>
         <div className="flex gap-3">
           <button onClick={() => setView(view === 'settings' ? 'dashboard' : 'settings')} className="p-3 rounded-full bg-slate-900/50 border border-white/10 text-white hover:bg-slate-800 transition-colors"><Settings size={20} /></button>
-          <button onClick={() => { setView(view === 'dashboard' ? 'form' : 'dashboard'); setEditingId(null); setFormData({ name: '', goal: 5, icon: 'star', colorIndex: 0 }); }} className="bg-white text-slate-950 p-3 rounded-full font-bold shadow-lg hover:bg-slate-200 transition-colors">
-            {view === 'dashboard' ? <Plus size={20} strokeWidth={3} /> : <X size={20} strokeWidth={3} />}
-          </button>
         </div>
       </header>
 
@@ -1438,13 +1439,21 @@ export default function App() {
               <h3 className="font-bold text-blue-400 mb-4 flex items-center gap-2 uppercase tracking-wider text-xs"><Star size={16} /> Manage Goals</h3>
 
               {/* AI Suggestion Button for Goals */}
-              <button
-                onClick={() => handleAIGenerate('goal')}
-                className="w-full mb-4 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 p-3 rounded-xl font-bold border border-blue-500/20 flex items-center justify-center gap-2 transition-colors"
-              >
-                <Sparkles size={16} />
-                <span>Suggest Goals</span>
-              </button>
+              <div className="mb-4 space-y-2">
+                <input
+                  value={customPrompt}
+                  onChange={(e) => setCustomPrompt(e.target.value)}
+                  placeholder="What do you want to work on? (e.g. Manners)"
+                  className="w-full bg-slate-950 p-3 rounded-xl border border-white/10 text-white text-sm focus:border-blue-500 outline-none placeholder:text-slate-600"
+                />
+                <button
+                  onClick={() => handleAIGenerate('goal')}
+                  className="w-full bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 p-3 rounded-xl font-bold border border-blue-500/20 flex items-center justify-center gap-2 transition-colors"
+                >
+                  <Sparkles size={16} />
+                  <span>Suggest Goals</span>
+                </button>
+              </div>
 
               {/* Suggestions List */}
               {feedback.type === 'goal' && feedback.visible && (
@@ -1528,6 +1537,14 @@ export default function App() {
                 </div>
 
                 <div className="flex gap-3 pt-4">
+                  {editingId && (
+                    <button
+                      onClick={() => { setEditingId(null); setFormData({ name: '', goal: 5, icon: 'star', colorIndex: 0 }); }}
+                      className="flex-1 py-4 bg-slate-700 hover:bg-slate-600 text-white font-bold rounded-xl transition-all"
+                    >
+                      Cancel
+                    </button>
+                  )}
                   {editingId && <button onClick={() => deleteBehavior()} className="flex-1 py-4 bg-red-500/10 hover:bg-red-500/20 text-red-400 font-bold rounded-xl border border-red-500/20 transition-all">Delete</button>}
                   <button onClick={saveBehavior} className="flex-[2] py-4 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl shadow-lg active:scale-95 transition-all">Save Mission</button>
                 </div>
