@@ -1,7 +1,7 @@
 // Force Vercel Rebuild
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import {
-  Rocket, Star, Gift, Trash2, Trophy, Settings, Sparkles,
+  Rocket, Star, Gift, Trash2, Trophy, Settings, Sparkles, Plus,
   Lightbulb, Award, Utensils, Edit2, X, ToggleLeft, ToggleRight,
   Pizza, IceCream, Gamepad2, Palmtree, Clapperboard, Image as ImageIcon,
   BookOpen, Heart, Music, PartyPopper, Pin, HelpCircle, Flame
@@ -900,7 +900,7 @@ const GrandCelebrationOverlay = ({ visible, prizeName, onClose, onReset, setting
 };
 
 
-const FeedbackPopup = ({ visible, message = 'XP Added!' }: any) => visible ? <div className="fixed top-10 left-1/2 -translate-x-1/2 bg-cyan-500 text-slate-900 px-6 py-2 rounded-full font-bold shadow-[0_0_20px_rgba(6,182,212,0.5)] z-[100] animate-bounce border border-white/20">{message}</div> : null;
+const FeedbackPopup = ({ visible, message = 'XP Added!' }: any) => visible ? <div className="fixed top-10 left-1/2 -translate-x-1/2 bg-cyan-500 text-slate-900 px-6 py-2 rounded-full font-bold shadow-[0_0_20px_rgba(6,182,212,0.5)] z-[100] animate-in fade-in zoom-in duration-300 border border-white/20">{message}</div> : null;
 
 
 
@@ -947,6 +947,8 @@ export default function App() {
   const [_loading, setLoading] = useState(false);
   const [view, setView] = useState<'dashboard' | 'settings'>('dashboard');
   const [customPrompt, setCustomPrompt] = useState('');
+  const [toast, setToast] = useState<{ visible: boolean, message: string } | null>(null);
+  const [showGoalForm, setShowGoalForm] = useState(false);
 
   // UI State
   const [showWheel, setShowWheel] = useState(false);
@@ -1109,6 +1111,8 @@ export default function App() {
         const jsonStr = jsonMatch ? jsonMatch[0] : text;
         const suggestions = JSON.parse(jsonStr);
         setFeedback({ visible: true, message: 'Ideas Generated!', type: type, data: suggestions });
+        setToast({ visible: true, message: 'Ideas Generated!' });
+        setTimeout(() => setToast(null), 2000);
       }
     } catch (e: any) {
       console.error(e);
@@ -1357,7 +1361,7 @@ export default function App() {
         />
       )}
 
-      <FeedbackPopup {...feedback} />
+      <FeedbackPopup visible={toast?.visible} message={toast?.message} />
 
       <header className="bg-transparent p-6 pt-[calc(1.5rem+env(safe-area-inset-top))] flex justify-between items-center relative z-10">
         <div className="flex items-center gap-3">
@@ -1438,137 +1442,163 @@ export default function App() {
             <div className="bg-slate-900 rounded-3xl border border-white/10 p-6 shadow-lg mb-8">
               <h3 className="font-bold text-blue-400 mb-4 flex items-center gap-2 uppercase tracking-wider text-xs"><Star size={16} /> Manage Goals</h3>
 
-              {/* AI Suggestion Button for Goals */}
-              <div className="mb-4 space-y-2">
-                <input
-                  value={customPrompt}
-                  onChange={(e) => setCustomPrompt(e.target.value)}
-                  placeholder="What do you want to work on? (e.g. Manners)"
-                  className="w-full bg-slate-950 p-3 rounded-xl border border-white/10 text-white text-sm focus:border-blue-500 outline-none placeholder:text-slate-600"
-                />
-                <button
-                  onClick={() => handleAIGenerate('goal')}
-                  className="w-full bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 p-3 rounded-xl font-bold border border-blue-500/20 flex items-center justify-center gap-2 transition-colors"
-                >
-                  <Sparkles size={16} />
-                  <span>Suggest Goals</span>
-                </button>
-              </div>
-
-              {/* Suggestions List */}
-              {feedback.type === 'goal' && feedback.visible && (
-                <div className="mb-6 grid grid-cols-1 gap-2 animate-in slide-in-from-top">
-                  {feedback.data.map((s: any, i: number) => (
-                    <button
-                      key={i}
-                      onClick={() => {
-                        setFormData({ name: s.name, goal: s.goal, icon: s.icon, colorIndex: Math.floor(Math.random() * 5) });
-                        setFeedback({ visible: false });
-                      }}
-                      className="bg-slate-950 p-3 rounded-xl text-left flex items-center gap-3 hover:bg-slate-800 transition-colors border border-white/5"
-                    >
-                      <div className="p-2 bg-slate-900 rounded-lg text-xl">
-                        {s.icon === 'star' ? '⭐' : s.icon === 'heart' ? '❤️' : s.icon === 'utensils' ? '🍽️' : '✨'}
+              {/* Current Goals List */}
+              {!showGoalForm && !editingId && (
+                <div className="space-y-3 mb-6">
+                  {behaviors.map(b => (
+                    <div key={b.id} className="bg-slate-950/50 p-4 rounded-2xl border border-white/5 flex items-center justify-between hover:border-blue-500/30 transition-colors">
+                      <div className="flex items-center gap-3">
+                        <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${GRADIENTS[b.colorIndex % GRADIENTS.length]} flex items-center justify-center shadow-lg`}>
+                          {React.createElement(ICON_MAP[b.icon] || Star, { size: 24, className: 'text-white' })}
+                        </div>
+                        <div>
+                          <p className="font-bold text-white">{b.name}</p>
+                          <p className="text-xs text-slate-400">{b.goal} Stars</p>
+                        </div>
                       </div>
-                      <div>
-                        <div className="font-bold text-white text-sm">{s.name}</div>
-                        <div className="text-slate-400 text-xs">{s.goal} Stars</div>
+                      <div className="flex gap-2">
+                        <button onClick={() => { setEditingId(b.id); setFormData({ name: b.name, goal: b.goal, icon: b.icon, colorIndex: b.colorIndex }); }} className="p-2 rounded-lg text-blue-400 hover:bg-blue-900/20 transition-colors"><Edit2 size={16} /></button>
+                        <button onClick={() => deleteBehavior(b.id)} className="p-2 rounded-lg text-slate-600 hover:text-red-400 transition-colors"><Trash2 size={16} /></button>
                       </div>
-                    </button>
+                    </div>
                   ))}
+                  <button
+                    onClick={() => { setShowGoalForm(true); setEditingId(null); setFormData({ name: '', goal: 5, icon: 'star', colorIndex: 0 }); }}
+                    className="w-full mt-4 bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 rounded-xl shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2"
+                  >
+                    <Plus size={20} />
+                    <span>Add New Goal</span>
+                  </button>
                 </div>
               )}
 
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Name</label>
-                  <input className="w-full p-4 bg-slate-950 rounded-xl border border-white/10 text-lg text-white placeholder:text-slate-600 focus:border-blue-500 outline-none" placeholder="e.g. Clean Room" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
-                </div>
-                <div>
-                  <div className="flex justify-between items-baseline mb-2">
-                    <label className="block text-xs font-bold text-slate-500 uppercase">Stars Required</label>
-                    <span className="text-[10px] text-slate-400 font-medium">Require more stars for easier tasks</span>
+              {/* Goal Form (New or Edit) */}
+              {(showGoalForm || editingId) && (
+                <div className="animate-in slide-in-from-bottom duration-300 bg-slate-950/50 p-4 rounded-2xl border border-white/5">
+                  <div className="flex items-center justify-between mb-6">
+                    <h4 className="text-lg font-bold text-white">{editingId ? 'Edit Goal' : 'New Goal'}</h4>
+                    <button onClick={() => { setShowGoalForm(false); setEditingId(null); }} className="p-2 text-slate-400 hover:text-white bg-slate-800 rounded-full"><X size={16} /></button>
                   </div>
-                  <div className="flex items-center gap-4 bg-slate-950 p-4 rounded-xl border border-white/10">
-                    <input type="range" min="3" max="10" value={formData.goal} onChange={e => setFormData({ ...formData, goal: parseInt(e.target.value) })} className="flex-1 accent-blue-500" />
-                    <span className="font-black text-2xl text-blue-400 w-10 text-center">{formData.goal}</span>
-                  </div>
-                </div>
 
-                {/* Icon Selector */}
-                <div>
-                  <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Icon</label>
-                  <div className="grid grid-cols-5 gap-2">
-                    {Object.entries(ICON_MAP).map(([key, IconComponent]: any) => (
+                  {/* AI Suggestion Button for Goals */}
+                  {!editingId && (
+                    <div className="mb-6 space-y-2">
+                      <input
+                        value={customPrompt}
+                        onChange={(e) => setCustomPrompt(e.target.value)}
+                        placeholder="What do you want to work on? (e.g. Manners)"
+                        className="w-full bg-slate-900 p-3 rounded-xl border border-white/10 text-white text-sm focus:border-blue-500 outline-none placeholder:text-slate-600"
+                      />
                       <button
-                        key={key}
-                        type="button"
-                        onClick={() => setFormData({ ...formData, icon: key })}
-                        className={`p-3 rounded-xl border-2 transition-all ${formData.icon === key ? 'border-blue-500 bg-blue-500/20' : 'border-white/10 bg-slate-950 hover:border-blue-400/50'}`}
+                        onClick={() => handleAIGenerate('goal')}
+                        className="w-full bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 p-3 rounded-xl font-bold border border-blue-500/20 flex items-center justify-center gap-2 transition-colors"
                       >
-                        <IconComponent size={24} className={formData.icon === key ? 'text-blue-400' : 'text-slate-400'} />
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Color Selector */}
-                <div>
-                  <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Color</label>
-                  <div className="grid grid-cols-3 gap-2">
-                    {[
-                      { index: 0, label: 'Pink', gradient: 'from-pink-500 to-rose-500' },
-                      { index: 1, label: 'Purple', gradient: 'from-purple-500 to-indigo-500' },
-                      { index: 2, label: 'Blue', gradient: 'from-blue-500 to-cyan-500' },
-                      { index: 3, label: 'Green', gradient: 'from-green-500 to-emerald-500' },
-                      { index: 4, label: 'Orange', gradient: 'from-yellow-500 to-orange-500' },
-                      { index: 5, label: 'Red', gradient: 'from-red-500 to-pink-500' },
-                    ].map((color) => (
-                      <button
-                        key={color.index}
-                        type="button"
-                        onClick={() => setFormData({ ...formData, colorIndex: color.index })}
-                        className={`p-4 rounded-xl bg-gradient-to-br ${color.gradient} transition-all ${formData.colorIndex === color.index ? 'ring-4 ring-blue-400 scale-105' : 'opacity-70 hover:opacity-100'}`}
-                      >
-                        <span className="text-white font-bold text-xs">{color.label}</span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="flex gap-3 pt-4">
-                  {editingId && (
-                    <button
-                      onClick={() => { setEditingId(null); setFormData({ name: '', goal: 5, icon: 'star', colorIndex: 0 }); }}
-                      className="flex-1 py-4 bg-slate-700 hover:bg-slate-600 text-white font-bold rounded-xl transition-all"
-                    >
-                      Cancel
-                    </button>
-                  )}
-                  {editingId && <button onClick={() => deleteBehavior()} className="flex-1 py-4 bg-red-500/10 hover:bg-red-500/20 text-red-400 font-bold rounded-xl border border-red-500/20 transition-all">Delete</button>}
-                  <button onClick={saveBehavior} className="flex-[2] py-4 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl shadow-lg active:scale-95 transition-all">Save Mission</button>
-                </div>
-              </div>
-
-              {/* Existing Goals List (for editing) */}
-              <div className="mt-8 pt-8 border-t border-white/10">
-                <h4 className="text-xs font-bold text-slate-500 uppercase mb-4">Current Goals</h4>
-                <div className="space-y-2">
-                  {behaviors.map(b => (
-                    <div key={b.id} className="flex items-center justify-between bg-slate-950 p-3 rounded-xl border border-white/5">
-                      <div className="flex items-center gap-3">
-                        <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${GRADIENTS[b.colorIndex % GRADIENTS.length]} flex items-center justify-center`}>
-                          {React.createElement(ICON_MAP[b.icon] || Star, { size: 16, className: 'text-white' })}
-                        </div>
-                        <span className="font-bold text-sm text-white">{b.name}</span>
-                      </div>
-                      <button onClick={() => { setEditingId(b.id); setFormData({ name: b.name, goal: b.goal, icon: b.icon, colorIndex: b.colorIndex }); }} className="p-2 text-slate-400 hover:text-white">
-                        <Edit2 size={16} />
+                        <Sparkles size={16} />
+                        <span>Suggest Goals</span>
                       </button>
                     </div>
-                  ))}
+                  )}
+
+                  {/* Suggestions List */}
+                  {feedback.type === 'goal' && feedback.visible && (
+                    <div className="mb-6 relative bg-slate-900 p-4 rounded-xl border border-white/10">
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="text-xs font-bold text-blue-400 uppercase">AI Suggestions</span>
+                        <button onClick={() => setFeedback({ ...feedback, visible: false })} className="text-slate-400 hover:text-white"><X size={16} /></button>
+                      </div>
+                      <div className="grid grid-cols-1 gap-2 animate-in slide-in-from-top">
+                        {feedback.data.map((s: any, i: number) => (
+                          <button
+                            key={i}
+                            onClick={() => {
+                              setFormData({ name: s.name, goal: s.goal, icon: s.icon, colorIndex: Math.floor(Math.random() * 5) });
+                              setFeedback({ visible: false });
+                            }}
+                            className="bg-slate-950 p-3 rounded-xl text-left flex items-center gap-3 hover:bg-slate-800 transition-colors border border-white/5"
+                          >
+                            <div className="p-2 bg-slate-900 rounded-lg text-xl">
+                              {s.icon === 'star' ? '⭐' : s.icon === 'heart' ? '❤️' : s.icon === 'utensils' ? '🍽️' : '✨'}
+                            </div>
+                            <div>
+                              <div className="font-bold text-white text-sm">{s.name}</div>
+                              <div className="text-slate-400 text-xs">{s.goal} Stars</div>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Name</label>
+                      <input className="w-full p-4 bg-slate-900 rounded-xl border border-white/10 text-lg text-white placeholder:text-slate-600 focus:border-blue-500 outline-none" placeholder="e.g. Clean Room" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
+                    </div>
+                    <div>
+                      <div className="flex justify-between items-baseline mb-2">
+                        <label className="block text-xs font-bold text-slate-500 uppercase">Stars Required</label>
+                        <span className="text-[10px] text-slate-400 font-medium">Require more stars for easier tasks</span>
+                      </div>
+                      <div className="flex items-center gap-4 bg-slate-900 p-4 rounded-xl border border-white/10">
+                        <input type="range" min="3" max="10" value={formData.goal} onChange={e => setFormData({ ...formData, goal: parseInt(e.target.value) })} className="flex-1 accent-blue-500" />
+                        <span className="font-black text-2xl text-blue-400 w-10 text-center">{formData.goal}</span>
+                      </div>
+                    </div>
+
+                    {/* Icon Selector */}
+                    <div>
+                      <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Icon</label>
+                      <div className="grid grid-cols-5 gap-2">
+                        {Object.entries(ICON_MAP).map(([key, IconComponent]: any) => (
+                          <button
+                            key={key}
+                            type="button"
+                            onClick={() => setFormData({ ...formData, icon: key })}
+                            className={`p-3 rounded-xl border-2 transition-all ${formData.icon === key ? 'border-blue-500 bg-blue-500/20' : 'border-white/10 bg-slate-900 hover:border-blue-400/50'}`}
+                          >
+                            <IconComponent size={24} className={formData.icon === key ? 'text-blue-400' : 'text-slate-400'} />
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Color Selector */}
+                    <div>
+                      <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Color</label>
+                      <div className="grid grid-cols-3 gap-2">
+                        {[
+                          { index: 0, label: 'Pink', gradient: 'from-pink-500 to-rose-500' },
+                          { index: 1, label: 'Purple', gradient: 'from-purple-500 to-indigo-500' },
+                          { index: 2, label: 'Blue', gradient: 'from-blue-500 to-cyan-500' },
+                          { index: 3, label: 'Green', gradient: 'from-green-500 to-emerald-500' },
+                          { index: 4, label: 'Orange', gradient: 'from-yellow-500 to-orange-500' },
+                          { index: 5, label: 'Red', gradient: 'from-red-500 to-pink-500' },
+                        ].map((color) => (
+                          <button
+                            key={color.index}
+                            type="button"
+                            onClick={() => setFormData({ ...formData, colorIndex: color.index })}
+                            className={`p-4 rounded-xl bg-gradient-to-br ${color.gradient} transition-all ${formData.colorIndex === color.index ? 'ring-4 ring-blue-400 scale-105' : 'opacity-70 hover:opacity-100'}`}
+                          >
+                            <span className="text-white font-bold text-xs">{color.label}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="flex gap-3 pt-4">
+                      <button
+                        onClick={() => { setShowGoalForm(false); setEditingId(null); setFormData({ name: '', goal: 5, icon: 'star', colorIndex: 0 }); }}
+                        className="flex-1 py-4 bg-slate-700 hover:bg-slate-600 text-white font-bold rounded-xl transition-all"
+                      >
+                        Cancel
+                      </button>
+                      {editingId && <button onClick={() => deleteBehavior()} className="flex-1 py-4 bg-red-500/10 hover:bg-red-500/20 text-red-400 font-bold rounded-xl border border-red-500/20 transition-all">Delete</button>}
+                      <button onClick={saveBehavior} className="flex-[2] py-4 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl shadow-lg active:scale-95 transition-all">Save Mission</button>
+                    </div>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
 
             <div className="bg-slate-900 rounded-3xl border border-white/10 p-6 shadow-lg mb-8">
