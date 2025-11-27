@@ -1379,11 +1379,11 @@ export default function App() {
         </div>
       </header>
 
-      <div className={`max-w-5xl mx-auto p-4 relative z-10 ${view === 'dashboard' ? (isAndroid ? 'pt-[500px]' : 'pt-[380px]') : (isAndroid ? 'pt-48' : 'pt-32')}`}>
+      <div className={`max-w-5xl mx-auto p-4 relative z-10 ${view === 'dashboard' ? (isAndroid ? 'pt-[460px]' : 'pt-[380px]') : (isAndroid ? 'pt-36' : 'pt-32')}`}>
         {/* Dashboard */}
         {view === 'dashboard' && (
           <div className="p-4 max-w-md mx-auto pb-32">
-            <div className={`fixed ${isAndroid ? 'top-[130px]' : 'top-[88px]'} left-0 right-0 z-40 bg-slate-950/95 backdrop-blur-xl pb-4 px-4 pt-2 shadow-xl border-b border-white/5 mb-8`}>
+            <div className={`fixed ${isAndroid ? 'top-[130px]' : 'top-[88px]'} left-0 right-0 z-40 bg-slate-950/95 backdrop-blur-xl pb-4 px-4 pt-2 shadow-xl border-b border-white/5 mb-4`}>
               <div className="max-w-md mx-auto">
                 <NextPrizeCard totalRewards={totalRewards} settings={settings} targetRef={targetRef} onUpdatePrize={updateGrandPrize} scale={barScale} />
               </div>
