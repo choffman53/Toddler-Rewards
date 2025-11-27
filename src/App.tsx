@@ -1219,7 +1219,7 @@ export default function App() {
           setBehaviors([...behaviors, newBehavior]);
         }
 
-        setView('dashboard');
+        // setView('dashboard'); // Don't close settings automatically
         setEditingId(null);
         setFormData({ name: '', goal: 5, icon: 'star', colorIndex: 0 });
         return;
@@ -1232,7 +1232,7 @@ export default function App() {
       } else {
         await addDoc(ref, { ...formData, count: 0, completions: 0, createdAt: serverTimestamp() });
       }
-      setView('dashboard');
+      // setView('dashboard');
     } catch (error) {
       console.error('Error saving behavior:', error);
       alert('Failed to save goal. Please try again.');
@@ -1597,29 +1597,31 @@ export default function App() {
                           className="w-full bg-slate-900 p-3 rounded-xl border border-white/10 text-white text-sm focus:border-purple-500 outline-none"
                           placeholder="Prize Name"
                         />
-                        <div className="flex gap-2">
+                        <div className="flex flex-col gap-2">
                           <input
                             type="number"
                             value={editingGrandPrize.goal}
                             onChange={e => setEditingGrandPrize({ ...editingGrandPrize, goal: parseInt(e.target.value) || 0 })}
-                            className="flex-1 bg-slate-900 p-3 rounded-xl border border-white/10 text-white text-sm text-center focus:border-purple-500 outline-none"
+                            className="w-full bg-slate-900 p-3 rounded-xl border border-white/10 text-white text-sm text-center focus:border-purple-500 outline-none"
                             placeholder="Points"
                           />
-                          <button
-                            onClick={() => {
-                              updateGrandPrize(p.id, { name: editingGrandPrize.name, goal: editingGrandPrize.goal });
-                              setEditingGrandPrize(null);
-                            }}
-                            className="bg-green-600 hover:bg-green-500 text-white px-4 py-2 rounded-xl font-bold text-sm transition-colors"
-                          >
-                            Save
-                          </button>
-                          <button
-                            onClick={() => setEditingGrandPrize(null)}
-                            className="bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-xl font-bold text-sm transition-colors"
-                          >
-                            Cancel
-                          </button>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => {
+                                updateGrandPrize(p.id, { name: editingGrandPrize.name, goal: editingGrandPrize.goal });
+                                setEditingGrandPrize(null);
+                              }}
+                              className="flex-1 bg-green-600 hover:bg-green-500 text-white px-4 py-2 rounded-xl font-bold text-sm transition-colors"
+                            >
+                              Save
+                            </button>
+                            <button
+                              onClick={() => setEditingGrandPrize(null)}
+                              className="flex-1 bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-xl font-bold text-sm transition-colors"
+                            >
+                              Cancel
+                            </button>
+                          </div>
                         </div>
                       </div>
                     ) : (
@@ -1731,166 +1733,13 @@ export default function App() {
                 ))}
               </div>
             </div>
+
+            <button onClick={() => setView('dashboard')} className="w-full mt-8 bg-slate-800 hover:bg-slate-700 text-white font-bold py-4 rounded-2xl transition-colors shadow-lg border border-white/10">
+              Done / Save Settings
+            </button>
           </div>
         )}
-        {view === 'form' && (
-          <div className="p-4 max-w-md mx-auto">
-            <div className="flex items-center justify-between mb-8">
-              <button onClick={() => setView('dashboard')} className="p-3 bg-slate-800 rounded-full text-white hover:bg-slate-700 transition-colors">
-                <ChevronRight className="rotate-180" />
-              </button>
-              <h2 className="text-2xl font-black text-white">{editingId ? 'Edit Goal' : 'New Goal'}</h2>
-              <div className="w-12"></div>
-            </div>
 
-            {/* AI Suggestion Button */}
-            {!editingId && (
-              <div className="mb-8">
-                <button
-                  onClick={async () => {
-                    if (_loading) return;
-                    setLoading(true);
-                    try {
-                      const prompt = `List 5 age-appropriate chores or behavioral goals for a toddler (ages 2-5). Return a JSON array of objects with keys: "name" (short title, max 4 words), "icon" (one of: star, smile, heart, zap, moon, sun, utensils, trophy, award, gift), "goal" (recommended stars number 3-8). Output ONLY valid JSON.`;
-                      const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
-                      if (!API_KEY) {
-                        alert("Missing API Key! Please create a .env file with VITE_GEMINI_API_KEY=your_key");
-                        setLoading(false);
-                        return;
-                      }
-
-                      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${API_KEY}`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
-                      });
-
-                      const data = await response.json();
-                      if (data.error) {
-                        throw new Error(data.error.message);
-                      }
-                      const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-                      if (text) {
-                        // Extract JSON from markdown code blocks if present
-                        const jsonMatch = text.match(/\[[\s\S]*\]/);
-                        const jsonStr = jsonMatch ? jsonMatch[0] : text;
-                        try {
-                          const suggestions = JSON.parse(jsonStr);
-
-                          // Show suggestions (using a temporary alert/confirm for MVP, or better: set a state to display them)
-                          // For now, let's pick a random one to demo, or better, add a "Suggestions" UI state.
-                          // Let's add a simple suggestions list below this button.
-                          setFeedback({ visible: true, message: 'Ideas Generated!', type: 'suggestions', data: suggestions });
-                        } catch (e) {
-                          console.error("JSON Parse Error:", e, text);
-                          alert("AI returned invalid data. Try again.");
-                        }
-                      } else {
-                        alert("No suggestions returned.");
-                      }
-                    } catch (e: any) {
-                      console.error(e);
-                      alert(`Error: ${e.message}`);
-                    } finally {
-                      setLoading(false);
-                    }
-                  }}
-                  className="w-full bg-gradient-to-r from-purple-500 to-indigo-600 text-white p-4 rounded-2xl font-black shadow-lg flex items-center justify-center gap-2 hover:scale-[1.02] transition-transform"
-                >
-                  {_loading ? <span className="animate-spin">⏳</span> : <Sparkles size={20} className="text-yellow-300" />}
-                  <span>{_loading ? 'Thinking...' : 'Ask AI for Ideas'}</span>
-                </button>
-
-                {/* Suggestions List */}
-                {feedback.type === 'suggestions' && (
-                  <div className="mt-4 grid grid-cols-1 gap-2 animate-in slide-in-from-top">
-                    {feedback.data.map((s: any, i: number) => (
-                      <button
-                        key={i}
-                        onClick={() => {
-                          setFormData({ name: s.name, goal: s.goal, icon: s.icon, colorIndex: Math.floor(Math.random() * 5) });
-                          setFeedback({ visible: false });
-                        }}
-                        className="bg-slate-800 p-3 rounded-xl text-left flex items-center gap-3 hover:bg-slate-700 transition-colors border border-white/5"
-                      >
-                        <div className="p-2 bg-slate-900 rounded-lg text-xl">
-                          {s.icon === 'star' ? '⭐' : s.icon === 'heart' ? '❤️' : s.icon === 'utensils' ? '🍽️' : '✨'}
-                        </div>
-                        <div>
-                          <div className="font-bold text-white text-sm">{s.name}</div>
-                          <div className="text-slate-400 text-xs">{s.goal} Stars</div>
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-
-            <div className="space-y-4 bg-slate-900 p-6 rounded-3xl border border-white/10">
-              <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Name</label>
-                <input className="w-full p-4 bg-slate-950 rounded-xl border border-white/10 text-lg text-white placeholder:text-slate-600 focus:border-blue-500 outline-none" placeholder="e.g. Clean Room" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
-              </div>
-              <div>
-                <div className="flex justify-between items-baseline mb-2">
-                  <label className="block text-xs font-bold text-slate-500 uppercase">Stars Required</label>
-                  <span className="text-[10px] text-slate-400 font-medium">Require more stars for easier tasks</span>
-                </div>
-                <div className="flex items-center gap-4 bg-slate-950 p-4 rounded-xl border border-white/10">
-                  <input type="range" min="3" max="10" value={formData.goal} onChange={e => setFormData({ ...formData, goal: parseInt(e.target.value) })} className="flex-1 accent-blue-500" />
-                  <span className="font-black text-2xl text-blue-400 w-10 text-center">{formData.goal}</span>
-                </div>
-              </div>
-
-              {/* Icon Selector */}
-              <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Icon</label>
-                <div className="grid grid-cols-5 gap-2">
-                  {Object.entries(ICON_MAP).map(([key, IconComponent]: any) => (
-                    <button
-                      key={key}
-                      type="button"
-                      onClick={() => setFormData({ ...formData, icon: key })}
-                      className={`p-3 rounded-xl border-2 transition-all ${formData.icon === key ? 'border-blue-500 bg-blue-500/20' : 'border-white/10 bg-slate-950 hover:border-blue-400/50'}`}
-                    >
-                      <IconComponent size={24} className={formData.icon === key ? 'text-blue-400' : 'text-slate-400'} />
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Color Selector */}
-              <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Color</label>
-                <div className="grid grid-cols-3 gap-2">
-                  {[
-                    { index: 0, label: 'Pink', gradient: 'from-pink-500 to-rose-500' },
-                    { index: 1, label: 'Purple', gradient: 'from-purple-500 to-indigo-500' },
-                    { index: 2, label: 'Blue', gradient: 'from-blue-500 to-cyan-500' },
-                    { index: 3, label: 'Green', gradient: 'from-green-500 to-emerald-500' },
-                    { index: 4, label: 'Orange', gradient: 'from-yellow-500 to-orange-500' },
-                    { index: 5, label: 'Red', gradient: 'from-red-500 to-pink-500' },
-                  ].map((color) => (
-                    <button
-                      key={color.index}
-                      type="button"
-                      onClick={() => setFormData({ ...formData, colorIndex: color.index })}
-                      className={`p-4 rounded-xl bg-gradient-to-br ${color.gradient} transition-all ${formData.colorIndex === color.index ? 'ring-4 ring-blue-400 scale-105' : 'opacity-70 hover:opacity-100'}`}
-                    >
-                      <span className="text-white font-bold text-xs">{color.label}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="flex gap-3 pt-4">
-                {editingId && <button onClick={() => deleteBehavior()} className="flex-1 py-4 bg-red-500/10 hover:bg-red-500/20 text-red-400 font-bold rounded-xl border border-red-500/20 transition-all">Delete</button>}
-                <button onClick={saveBehavior} className="flex-[2] py-4 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl shadow-lg active:scale-95 transition-all">Save Mission</button>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
       {/* Flying Stars Overlay */}
       {flyingStars.map(star => (
