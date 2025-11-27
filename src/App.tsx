@@ -189,8 +189,8 @@ const NextPrizeCard = ({ totalRewards, settings, targetRef, scale = 1 }: any) =>
             >
               <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/diagonal-stripes.png')] opacity-20"></div>
             </div>
-            {/* Shine Effect */}
-            <div className={`absolute top-0 bottom-0 w-20 bg-gradient-to-r from-transparent via-white/80 to-transparent skew-x-12 blur-sm transition-all duration-1000 ${scale > 1 ? 'translate-x-[600px]' : '-translate-x-[100px]'}`}></div>
+            {/* Shine Effect - Vivid Glow Wipe */}
+            <div className={`absolute top-0 bottom-0 w-32 bg-gradient-to-r from-transparent via-purple-500 via-pink-500 via-white to-transparent skew-x-12 blur-md mix-blend-screen transition-all duration-[2500ms] ease-in-out ${scale > 1 ? 'translate-x-[600px]' : '-translate-x-[150px]'}`}></div>
           </div>
         </div>
       </div>
@@ -1052,9 +1052,9 @@ export default function App() {
     setFlyingStars(prev => [...prev, { id: Date.now(), x: startX, y: startY, targetX, targetY }]);
     setTimeout(() => {
       setFlyingStars(prev => prev.slice(1));
-      // Trigger bar effect when star lands (1.5s duration)
+      // Trigger bar effect when star lands (2.5s duration)
       setBarScale(1.1);
-      setTimeout(() => setBarScale(1), 1000);
+      setTimeout(() => setBarScale(1), 2500);
     }, 1500);
   };
 
