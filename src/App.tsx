@@ -1347,6 +1347,7 @@ export default function App() {
       };
       setSettings({ ...settings, grandPrizes: [...(settings.grandPrizes || []), newPrize] });
       setNewGrandPrize({ name: '', goal: 10, repeatable: true, imageUrl: '' });
+      setShowPrizeForm(false);
     }
   };
   // const removeGrandPrize = (id: string) => {
