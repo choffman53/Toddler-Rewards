@@ -1222,7 +1222,7 @@ export default function App() {
 
 
   const updateGrandPrize = (prizeId: string, updates: any) => {
-    const updated = settings.grandPrizes.map((x: any) => x.id === prizeId ? { ...x, ...updates } : x);
+    const updated = (settings.grandPrizes || []).map((x: any) => x.id === prizeId ? { ...x, ...updates } : x);
     if (db && familyId) setDoc(doc(db, 'families', familyId, 'config', 'main'), { ...settings, grandPrizes: updated });
     setSettings({ ...settings, grandPrizes: updated });
   };
