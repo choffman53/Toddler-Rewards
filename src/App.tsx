@@ -1707,14 +1707,19 @@ export default function App() {
                             <button
                               disabled={_loading}
                               onClick={() => {
-                                if (!editingGrandPrize) return;
-                                updateGrandPrize(editingGrandPrize.id, {
-                                  name: editingGrandPrize.name,
-                                  goal: editingGrandPrize.goal,
-                                  repeatable: editingGrandPrize.repeatable,
-                                  imageUrl: editingGrandPrize.imageUrl
-                                });
-                                setEditingGrandPrize(null);
+                                try {
+                                  console.log('Saving prize:', p.id, editingGrandPrize);
+                                  updateGrandPrize(p.id, {
+                                    name: editingGrandPrize.name,
+                                    goal: editingGrandPrize.goal,
+                                    repeatable: editingGrandPrize.repeatable,
+                                    imageUrl: editingGrandPrize.imageUrl
+                                  });
+                                  setEditingGrandPrize(null);
+                                } catch (e) {
+                                  console.error("Save failed:", e);
+                                  alert("Save failed! Check console.");
+                                }
                               }}
                               className={`flex-1 px-4 py-2 rounded-xl font-bold text-sm transition-colors ${_loading ? 'bg-slate-700 text-slate-500 cursor-not-allowed' : 'bg-green-600 hover:bg-green-500 text-white'
                                 }`}
