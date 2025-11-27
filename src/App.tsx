@@ -1705,13 +1705,21 @@ export default function App() {
                           </div>
                           <div className="flex gap-2">
                             <button
+                              disabled={_loading}
                               onClick={() => {
-                                updateGrandPrize(p.id, { name: editingGrandPrize.name, goal: editingGrandPrize.goal, repeatable: editingGrandPrize.repeatable, imageUrl: editingGrandPrize.imageUrl });
+                                if (!editingGrandPrize) return;
+                                updateGrandPrize(editingGrandPrize.id, {
+                                  name: editingGrandPrize.name,
+                                  goal: editingGrandPrize.goal,
+                                  repeatable: editingGrandPrize.repeatable,
+                                  imageUrl: editingGrandPrize.imageUrl
+                                });
                                 setEditingGrandPrize(null);
                               }}
-                              className="flex-1 bg-green-600 hover:bg-green-500 text-white px-4 py-2 rounded-xl font-bold text-sm transition-colors"
+                              className={`flex-1 px-4 py-2 rounded-xl font-bold text-sm transition-colors ${_loading ? 'bg-slate-700 text-slate-500 cursor-not-allowed' : 'bg-green-600 hover:bg-green-500 text-white'
+                                }`}
                             >
-                              Save
+                              {_loading ? 'Wait...' : 'Save'}
                             </button>
                             <button
                               onClick={() => setEditingGrandPrize(null)}
