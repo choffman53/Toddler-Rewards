@@ -1310,9 +1310,9 @@ export default function App() {
         id: Date.now().toString(),
         ...newGrandPrize,
         active: true,
-        imageUrl: imageUrl
+        imageUrl: imageUrl,
+        lastClaimedAt: totalRewards // Start progress at 0
       };
-      setSettings({ ...settings, grandPrizes: [...(settings.grandPrizes || []), newPrize] });
       setSettings({ ...settings, grandPrizes: [...(settings.grandPrizes || []), newPrize] });
       setNewGrandPrize({ name: '', goal: 10, repeatable: true });
     }
