@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import {
   Rocket, Star, Gift, Plus, Trash2, Trophy, Settings, Sparkles,
-  Lightbulb, Award, Utensils, Edit2, X, ToggleLeft, ToggleRight, ChevronRight,
+  Lightbulb, Award, Utensils, Edit2, X, ToggleLeft, ToggleRight,
   Pizza, IceCream, Gamepad2, Palmtree, Clapperboard, Image as ImageIcon,
   BookOpen, Heart, Music, PartyPopper, Pin, HelpCircle, Flame
 } from 'lucide-react';
