@@ -4,7 +4,7 @@ import {
   Rocket, Star, Gift, Trash2, Trophy, Settings, Sparkles, Plus,
   Lightbulb, Award, Utensils, Edit2, X, ToggleLeft, ToggleRight,
   Pizza, IceCream, Gamepad2, Palmtree, Clapperboard, Image as ImageIcon,
-  BookOpen, Heart, Music, PartyPopper, Pin, HelpCircle, Flame
+  BookOpen, Heart, Music, PartyPopper, Pin, HelpCircle, Flame, Loader2
 } from 'lucide-react';
 import { ConfettiSystem, type ConfettiHandle } from './Confetti';
 import { Onboarding } from './Onboarding';
@@ -1685,11 +1685,13 @@ export default function App() {
                             {editingGrandPrize.imageUrl && <img src={editingGrandPrize.imageUrl} className="w-full h-full object-cover" />}
                             <button
                               onClick={() => handleGenerateImage(editingGrandPrize.name, true)}
-                              className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity font-bold text-white gap-2"
+                              disabled={_loading}
+                              className={`absolute inset-0 flex items-center justify-center bg-black/60 font-bold text-white gap-2 transition-all ${_loading ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
                             >
-                              <ImageIcon size={20} /> {_loading ? 'Generating...' : 'Regenerate Image'}
+                              {_loading ? <Loader2 size={24} className="animate-spin text-purple-400" /> : <ImageIcon size={20} />}
+                              {_loading ? 'Generating...' : 'Regenerate Image'}
                             </button>
-                            {!editingGrandPrize.imageUrl && (
+                            {!editingGrandPrize.imageUrl && !_loading && (
                               <button
                                 onClick={() => handleGenerateImage(editingGrandPrize.name, true)}
                                 className="absolute inset-0 flex items-center justify-center font-bold text-purple-400 gap-2"
@@ -1711,7 +1713,7 @@ export default function App() {
                           <div className="flex gap-2">
                             <button
                               onClick={() => {
-                                updateGrandPrize(p.id, { name: editingGrandPrize.name, goal: editingGrandPrize.goal, repeatable: editingGrandPrize.repeatable });
+                                updateGrandPrize(p.id, { name: editingGrandPrize.name, goal: editingGrandPrize.goal, repeatable: editingGrandPrize.repeatable, imageUrl: editingGrandPrize.imageUrl });
                                 setEditingGrandPrize(null);
                               }}
                               className="flex-1 bg-green-600 hover:bg-green-500 text-white px-4 py-2 rounded-xl font-bold text-sm transition-colors"
@@ -1843,11 +1845,13 @@ export default function App() {
                         {newGrandPrize.imageUrl && <img src={newGrandPrize.imageUrl} className="w-full h-full object-cover" />}
                         <button
                           onClick={() => handleGenerateImage(newGrandPrize.name, false)}
-                          className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity font-bold text-white gap-2"
+                          disabled={_loading}
+                          className={`absolute inset-0 flex items-center justify-center bg-black/60 font-bold text-white gap-2 transition-all ${_loading ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
                         >
-                          <ImageIcon size={20} /> {_loading ? 'Generating...' : 'Regenerate Image'}
+                          {_loading ? <Loader2 size={24} className="animate-spin text-purple-400" /> : <ImageIcon size={20} />}
+                          {_loading ? 'Generating...' : 'Regenerate Image'}
                         </button>
-                        {!newGrandPrize.imageUrl && (
+                        {!newGrandPrize.imageUrl && !_loading && (
                           <button
                             onClick={() => handleGenerateImage(newGrandPrize.name, false)}
                             className="absolute inset-0 flex items-center justify-center font-bold text-purple-400 gap-2"
