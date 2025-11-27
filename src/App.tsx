@@ -1046,7 +1046,7 @@ export default function App() {
     if (!targetRef.current) return;
     const rect = targetRef.current.getBoundingClientRect();
     const targetX = rect.left + rect.width / 2;
-    const targetY = rect.top + rect.height / 2;
+    const targetY = rect.top + rect.height / 2 - 20;
 
 
     setFlyingStars(prev => [...prev, { id: Date.now(), x: startX, y: startY, targetX, targetY }]);
@@ -1054,7 +1054,7 @@ export default function App() {
       setFlyingStars(prev => prev.slice(1));
       // Trigger bar effect when star lands (1.5s duration)
       setBarScale(1.1);
-      setTimeout(() => setBarScale(1), 200);
+      setTimeout(() => setBarScale(1), 1000);
     }, 1500);
   };
 
@@ -1377,7 +1377,7 @@ export default function App() {
         </div>
       </header>
 
-      <div className="max-w-5xl mx-auto p-4 relative z-10 pt-[380px]">
+      <div className={`max-w-5xl mx-auto p-4 relative z-10 ${view === 'dashboard' ? 'pt-[380px]' : 'pt-32'}`}>
         {/* Dashboard */}
         {view === 'dashboard' && (
           <div className="p-4 max-w-md mx-auto pb-32">
