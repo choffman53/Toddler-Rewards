@@ -3,7 +3,8 @@
 @tailwind utilities;
 
 body {
-  background-color: #020617; /* slate-950 */
+  background-color: #020617;
+  /* slate-950 */
   color: white;
 }
 
@@ -12,9 +13,11 @@ body {
     transform: translate(var(--start-x), var(--start-y)) scale(0.5) rotate(0deg);
     opacity: 1;
   }
+
   60% {
     transform: translate(calc(var(--start-x) + (var(--target-x) - var(--start-x)) * 0.5), calc(var(--start-y) + (var(--target-y) - var(--start-y)) * 0.5 - 50px)) scale(1.5) rotate(180deg);
   }
+
   100% {
     transform: translate(var(--target-x), var(--target-y)) scale(0.2) rotate(360deg);
     opacity: 0;
@@ -27,5 +30,5 @@ body {
   left: 0;
   pointer-events: none;
   z-index: 9999;
-  animation: fly-to-target 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation: fly-to-target 1.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }

@@ -108,7 +108,7 @@ const PremiumIcon = ({ Icon, size = 24, className = "", colorMain = "text-white"
 );
 
 // --- NEXT PRIZE CARD (Hero) ---
-const NextPrizeCard = ({ totalRewards, settings, targetRef }: any) => {
+const NextPrizeCard = ({ totalRewards, settings, targetRef, scale = 1 }: any) => {
   // Find the next claimable prize
   const prizesWithProgress = settings.grandPrizes
     .filter((p: any) => p.active)
@@ -182,7 +182,7 @@ const NextPrizeCard = ({ totalRewards, settings, targetRef }: any) => {
             <span>{nextPrize.currentProgress} Points</span>
             <span className="opacity-80">{pointsNeeded} more!</span>
           </div>
-          <div ref={targetRef} className="relative h-6 bg-slate-900/50 rounded-2xl overflow-hidden backdrop-blur-sm border border-white/10 shadow-inner">
+          <div ref={targetRef} style={{ transform: `scale(${scale})`, transition: 'transform 0.2s' }} className="relative h-6 bg-slate-900/50 rounded-2xl overflow-hidden backdrop-blur-sm border border-white/10 shadow-inner">
             <div
               className="absolute top-0 left-0 h-full bg-gradient-to-r from-white to-slate-300 transition-all duration-1000 ease-out shadow-[0_0_20px_rgba(255,255,255,0.4)]"
               style={{ width: `${progress}%` }}
@@ -949,6 +949,7 @@ export default function App() {
   const [customPrompt, setCustomPrompt] = useState('');
   const [toast, setToast] = useState<{ visible: boolean, message: string } | null>(null);
   const [showGoalForm, setShowGoalForm] = useState(false);
+  const [barScale, setBarScale] = useState(1);
 
   // UI State
   const [showWheel, setShowWheel] = useState(false);
@@ -1062,9 +1063,14 @@ export default function App() {
     const targetX = rect.left + rect.width / 2;
     const targetY = rect.top + rect.height / 2;
 
-    const id = Date.now();
-    setFlyingStars(prev => [...prev, { id, x: startX, y: startY, targetX, targetY }]);
-    setTimeout(() => setFlyingStars(prev => prev.filter(s => s.id !== id)), 1000);
+
+    setFlyingStars(prev => [...prev, { id: Date.now(), x: startX, y: startY, targetX, targetY }]);
+    setTimeout(() => {
+      setFlyingStars(prev => prev.slice(1));
+      // Trigger bar effect when star lands (1.5s duration)
+      setBarScale(1.1);
+      setTimeout(() => setBarScale(1), 200);
+    }, 1500);
   };
 
   const prevTotal = useRef(totalRewards);
@@ -1363,7 +1369,7 @@ export default function App() {
 
       <FeedbackPopup visible={toast?.visible} message={toast?.message} />
 
-      <header className="bg-transparent p-6 pt-[calc(1.5rem+env(safe-area-inset-top))] flex justify-between items-center relative z-10">
+      <header className="sticky top-0 bg-slate-950/90 backdrop-blur-md p-6 pt-[calc(1.5rem+env(safe-area-inset-top))] flex justify-between items-center relative z-30 shadow-lg border-b border-white/5">
         <div className="flex items-center gap-3">
           <div className="w-14 h-14 rounded-2xl overflow-hidden shadow-lg cursor-pointer hover:opacity-80 transition-opacity" onClick={handleLogout}>
             <img src="/mascot.png" alt="avatar" className="w-full h-full object-cover" />
@@ -1387,7 +1393,9 @@ export default function App() {
         {/* Dashboard */}
         {view === 'dashboard' && (
           <div className="p-4 max-w-md mx-auto pb-32">
-            <NextPrizeCard totalRewards={totalRewards} settings={settings} targetRef={targetRef} onUpdatePrize={updateGrandPrize} />
+            <div className="sticky top-[88px] z-20 bg-slate-950/95 backdrop-blur-xl pb-4 -mx-4 px-4 pt-2 shadow-xl border-b border-white/5 mb-8">
+              <NextPrizeCard totalRewards={totalRewards} settings={settings} targetRef={targetRef} onUpdatePrize={updateGrandPrize} scale={barScale} />
+            </div>
             <GiftBoxSection
               prizes={settings.grandPrizes}
               totalRewards={totalRewards}
@@ -1716,17 +1724,17 @@ export default function App() {
                     )}
                   </div>
                 ))}
-                <div className="flex gap-2 pt-2">
+                <div className="flex flex-col gap-2 pt-2">
                   <input
                     placeholder="Prize Name"
-                    className="flex-1 bg-slate-950 p-3 rounded-xl border border-white/10 text-sm text-white focus:border-purple-500 outline-none"
+                    className="w-full bg-slate-950 p-3 rounded-xl border border-white/10 text-sm text-white focus:border-purple-500 outline-none"
                     value={newGrandPrize.name}
                     onChange={e => setNewGrandPrize({ ...newGrandPrize, name: e.target.value })}
                   />
                   <input
                     type="number"
                     placeholder="#"
-                    className="w-20 bg-slate-950 p-3 rounded-xl border border-white/10 text-sm text-white text-center focus:border-purple-500 outline-none"
+                    className="w-full bg-slate-950 p-3 rounded-xl border border-white/10 text-sm text-white text-center focus:border-purple-500 outline-none"
                     value={newGrandPrize.goal}
                     onChange={e => setNewGrandPrize({ ...newGrandPrize, goal: parseInt(e.target.value) || 0 })}
                   />
