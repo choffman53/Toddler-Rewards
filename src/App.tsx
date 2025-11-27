@@ -3,7 +3,7 @@ import {
   Rocket, Star, Gift, Plus, Trash2, Trophy, Settings, Sparkles,
   Lightbulb, Award, Utensils, Edit2, X, ToggleLeft, ToggleRight, ChevronRight,
   Pizza, IceCream, Gamepad2, Palmtree, Clapperboard, Image as ImageIcon,
-  BookOpen, Heart, Music, PartyPopper, Pin, HelpCircle
+  BookOpen, Heart, Music, PartyPopper, Pin, HelpCircle, Flame
 } from 'lucide-react';
 import { ConfettiSystem, type ConfettiHandle } from './Confetti';
 import { Onboarding } from './Onboarding';
@@ -107,7 +107,7 @@ const PremiumIcon = ({ Icon, size = 24, className = "", colorMain = "text-white"
 );
 
 // --- NEXT PRIZE CARD (Hero) ---
-const NextPrizeCard = ({ totalRewards, settings }: any) => {
+const NextPrizeCard = ({ totalRewards, settings, targetRef }: any) => {
   // Find the next claimable prize
   const prizesWithProgress = settings.grandPrizes
     .filter((p: any) => p.active)
@@ -181,7 +181,7 @@ const NextPrizeCard = ({ totalRewards, settings }: any) => {
             <span>{nextPrize.currentProgress} Points</span>
             <span className="opacity-80">{pointsNeeded} more!</span>
           </div>
-          <div className="relative h-6 bg-slate-900/50 rounded-2xl overflow-hidden backdrop-blur-sm border border-white/10 shadow-inner">
+          <div ref={targetRef} className="relative h-6 bg-slate-900/50 rounded-2xl overflow-hidden backdrop-blur-sm border border-white/10 shadow-inner">
             <div
               className="absolute top-0 left-0 h-full bg-gradient-to-r from-white to-slate-300 transition-all duration-1000 ease-out shadow-[0_0_20px_rgba(255,255,255,0.4)]"
               style={{ width: `${progress}%` }}
@@ -476,14 +476,8 @@ const GoalListItem = ({ behavior, onUpdate, onClaim, onDelete, onEdit }: any) =>
 // --- MODAL COMPONENTS ---
 
 const Confetti = ({ active }: { active: boolean }) => {
-  // This Confetti component is now deprecated/unused as ConfettiSystem is used directly in App.
-  // Keeping it here for context but it will be removed or replaced.
   if (!active) return null;
-  return (
-    <div className="fixed inset-0 pointer-events-none z-[100] overflow-hidden">
-      {/* This content will be replaced by ConfettiSystem */}
-    </div>
-  );
+  return <div className="fixed inset-0 pointer-events-none z-[100] overflow-hidden" />;
 };
 
 const SurpriseEggModal = ({ onClose, onWin, prizes, settings }: any) => {
@@ -934,7 +928,9 @@ export default function App() {
         { id: 4, name: 'Zoo Trip', goal: 30, active: true, timesClaimed: 0, imageUrl: '/prize-4.jpg' }
       ],
       wheelPrizes: ['Sticker', 'Treat', 'Story', 'Hug', 'Song'],
-      spentPoints: 0
+      spentPoints: 0,
+      streak: 0,
+      lastVisit: null
     };
   });
 
@@ -1029,6 +1025,44 @@ export default function App() {
     }
   }, [totalRewards, settings.grandPrizes, db, familyId]);
 
+  // --- STREAK LOGIC ---
+  useEffect(() => {
+    if (!familyId) return;
+    const now = new Date();
+    const lastVisit = settings.lastVisit ? new Date(settings.lastVisit) : null;
+
+    if (lastVisit) {
+      const isSameDay = now.toDateString() === lastVisit.toDateString();
+      if (!isSameDay) {
+        const yesterday = new Date(now);
+        yesterday.setDate(yesterday.getDate() - 1);
+        const isYesterday = yesterday.toDateString() === lastVisit.toDateString();
+
+        const newStreak = isYesterday ? (settings.streak || 0) + 1 : 1;
+        setSettings((prev: any) => ({ ...prev, streak: newStreak, lastVisit: now.toISOString() }));
+        if (db) updateDoc(doc(db, 'families', familyId, 'config', 'main'), { streak: newStreak, lastVisit: now.toISOString() });
+      }
+    } else {
+      setSettings((prev: any) => ({ ...prev, streak: 1, lastVisit: now.toISOString() }));
+      if (db) updateDoc(doc(db, 'families', familyId, 'config', 'main'), { streak: 1, lastVisit: now.toISOString() });
+    }
+  }, [familyId]);
+
+  // --- FLYING STARS ---
+  const [flyingStars, setFlyingStars] = useState<any[]>([]);
+  const targetRef = useRef<HTMLDivElement>(null);
+
+  const handleStarAnimation = (startX: number, startY: number) => {
+    if (!targetRef.current) return;
+    const rect = targetRef.current.getBoundingClientRect();
+    const targetX = rect.left + rect.width / 2;
+    const targetY = rect.top + rect.height / 2;
+
+    const id = Date.now();
+    setFlyingStars(prev => [...prev, { id, x: startX, y: startY, targetX, targetY }]);
+    setTimeout(() => setFlyingStars(prev => prev.filter(s => s.id !== id)), 1000);
+  };
+
   const prevTotal = useRef(totalRewards);
   useEffect(() => {
     if (totalRewards > prevTotal.current) { setAnimateBar(true); setTimeout(() => setAnimateBar(false), 1000); }
@@ -1043,6 +1077,7 @@ export default function App() {
     if (!familyId) return;
     if (e && delta > 0) {
       if (confettiRef.current) confettiRef.current.burst(e.clientX, e.clientY);
+      handleStarAnimation(e.clientX, e.clientY);
     }
     const newCount = Math.max(0, (behavior.count || 0) + delta);
     if (delta > 0 && newCount > behavior.goal) return;
@@ -1286,7 +1321,11 @@ export default function App() {
           </div>
           <div>
             <h1 className="font-black text-xl text-white tracking-tight">Hello, {familyId}!</h1>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 mt-1">
+              <div className="flex items-center gap-1 bg-orange-500/20 border border-orange-500/50 px-2 py-0.5 rounded-full">
+                <Flame size={12} className="text-orange-500 fill-orange-500 animate-pulse" />
+                <span className="text-[10px] font-bold text-orange-200 uppercase tracking-wider">{settings.streak || 1} Day Streak</span>
+              </div>
             </div>
           </div>
         </div>
@@ -1299,9 +1338,10 @@ export default function App() {
       </header>
 
       <div className="max-w-5xl mx-auto p-4 relative z-10">
-        {view === 'dashboard' ? (
-          <div className="space-y-8">
-            <NextPrizeCard totalRewards={totalRewards} settings={settings} onUpdatePrize={updateGrandPrize} />
+        {/* Dashboard */}
+        {view === 'dashboard' && (
+          <div className="p-4 max-w-md mx-auto pb-32">
+            <NextPrizeCard totalRewards={totalRewards} settings={settings} targetRef={targetRef} onUpdatePrize={updateGrandPrize} />
             <GiftBoxSection
               prizes={settings.grandPrizes}
               totalRewards={totalRewards}
@@ -1337,304 +1377,320 @@ export default function App() {
             </div>
           </div>
         ) : view === 'settings' ? (
-          <div className="p-4 max-w-md mx-auto space-y-6">
-            {/* Settings Header */}
-            <div className="flex items-center justify-between mb-8">
-              <h2 className="text-3xl font-black text-white">Settings</h2>
-              <div className="flex gap-2">
-                <button onClick={() => setShowTutorial(true)} className="bg-slate-800 hover:bg-slate-700 text-slate-300 px-4 py-2 rounded-xl font-bold transition-colors flex items-center gap-2">
-                  <HelpCircle size={18} />
-                  <span>Help</span>
-                </button>
-                <button onClick={handleLogout} className="bg-red-500/10 hover:bg-red-500/20 text-red-400 px-4 py-2 rounded-xl font-bold transition-colors">
-                  Sign Out
-                </button>
-              </div>
-            </div>
-
-
-
-            <div className="bg-slate-900 rounded-3xl border border-white/10 p-6 shadow-lg">
-              <h3 className="font-bold text-purple-400 mb-4 flex items-center gap-2 uppercase tracking-wider text-xs"><Gift size={16} /> Grand Prizes</h3>
-              <div className="space-y-3 mb-6">
-                {(settings.grandPrizes || []).map((p: any) => (
-                  <div key={p.id} className="bg-slate-950/50 p-4 rounded-2xl border border-white/5 hover:border-purple-500/30 transition-colors">
-                    {editingGrandPrize?.id === p.id ? (
-                      <div className="space-y-3">
-                        <input
-                          type="text"
-                          value={editingGrandPrize.name}
-                          onChange={e => setEditingGrandPrize({ ...editingGrandPrize, name: e.target.value })}
-                          className="w-full bg-slate-900 p-3 rounded-xl border border-white/10 text-white text-sm focus:border-purple-500 outline-none"
-                          placeholder="Prize Name"
-                        />
-                        <div className="flex gap-2">
-                          <input
-                            type="number"
-                            value={editingGrandPrize.goal}
-                            onChange={e => setEditingGrandPrize({ ...editingGrandPrize, goal: parseInt(e.target.value) || 0 })}
-                            className="flex-1 bg-slate-900 p-3 rounded-xl border border-white/10 text-white text-sm text-center focus:border-purple-500 outline-none"
-                            placeholder="Points"
-                          />
-                          <button
-                            onClick={() => {
-                              updateGrandPrize(p.id, { name: editingGrandPrize.name, goal: editingGrandPrize.goal });
-                              setEditingGrandPrize(null);
-                            }}
-                            className="bg-green-600 hover:bg-green-500 text-white px-4 py-2 rounded-xl font-bold text-sm transition-colors"
-                          >
-                            Save
-                          </button>
-                          <button
-                            onClick={() => setEditingGrandPrize(null)}
-                            className="bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-xl font-bold text-sm transition-colors"
-                          >
-                            Cancel
-                          </button>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="flex gap-3 items-center">
-                        <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center shadow-lg">
-                          <Gift className="text-white" size={24} />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-bold text-white truncate">{p.name}</p>
-                          <p className="text-xs text-slate-400">Goal: {p.goal} points{p.timesClaimed > 0 ? ` • Claimed ${p.timesClaimed}x` : ''}</p>
-                        </div>
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => setEditingGrandPrize({ ...p })}
-                            className="p-2 rounded-lg text-purple-400 hover:bg-purple-900/20 transition-colors"
-                            title="Edit"
-                          >
-                            <Edit2 size={16} />
-                          </button>
-                          <button
-                            onClick={() => {
-                              const updated = settings.grandPrizes.map((x: any) => x.id === p.id ? { ...x, active: !x.active } : x);
-                              if (db && familyId) setDoc(doc(db, 'families', familyId, 'config', 'main'), { ...settings, grandPrizes: updated });
-                              setSettings({ ...settings, grandPrizes: updated });
-                            }}
-                            className={`p-2 rounded-lg transition-colors ${p.active ? 'text-green-400 bg-green-900/20' : 'text-slate-600 bg-slate-800'}`}
-                            title={p.active ? 'Active' : 'Inactive'}
-                          >
-                            {p.active ? <ToggleRight size={18} /> : <ToggleLeft size={18} />}
-                          </button>
-                          <button
-                            onClick={() => {
-                              const updated = settings.grandPrizes.filter((x: any) => x.id !== p.id);
-                              if (db && familyId) setDoc(doc(db, 'families', familyId, 'config', 'main'), { ...settings, grandPrizes: updated });
-                              setSettings({ ...settings, grandPrizes: updated });
-                            }}
-                            className="text-slate-600 hover:text-red-400 p-2 transition-colors"
-                            title="Delete"
-                          >
-                            <Trash2 size={16} />
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                ))}
-                <div className="flex gap-2 pt-2">
-                  <input
-                    placeholder="Prize Name"
-                    className="flex-1 bg-slate-950 p-3 rounded-xl border border-white/10 text-sm text-white focus:border-purple-500 outline-none"
-                    value={newGrandPrize.name}
-                    onChange={e => setNewGrandPrize({ ...newGrandPrize, name: e.target.value })}
-                  />
-                  <input
-                    type="number"
-                    placeholder="#"
-                    className="w-20 bg-slate-950 p-3 rounded-xl border border-white/10 text-sm text-white text-center focus:border-purple-500 outline-none"
-                    value={newGrandPrize.goal}
-                    onChange={e => setNewGrandPrize({ ...newGrandPrize, goal: parseInt(e.target.value) || 0 })}
-                  />
-                  <button
-                    onClick={addGrandPrize}
-                    className="bg-purple-600 hover:bg-purple-500 text-white px-4 rounded-xl font-bold text-sm transition-colors shadow-lg shadow-purple-500/20"
-                  >
-                    Add
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-slate-900 rounded-3xl border border-white/10 p-6 shadow-lg">
-              <h3 className="font-bold text-yellow-300 mb-4 flex items-center gap-2 uppercase tracking-wider text-xs"><Gift size={16} /> Egg Prizes</h3>
-              <div className="flex gap-2 mb-4">
-                <input className="flex-1 p-3 rounded-xl border border-white/10 bg-slate-950 text-white text-sm focus:border-yellow-500 outline-none" placeholder="New Prize" value={newPrize} onChange={e => setNewPrize(e.target.value)} onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addWheelPrize())} />
-                <button type="button" onClick={addWheelPrize} className="bg-yellow-500 text-white px-4 rounded-xl font-bold text-lg hover:bg-yellow-600 transition-all active:scale-95">+</button>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {(settings.wheelPrizes || []).map((p: any, i: number) => (
-                  <span key={i} className="bg-slate-950 border border-white/10 px-3 py-1.5 rounded-lg text-sm text-slate-700 flex items-center gap-2 shadow-sm">
-                    {p} <button type="button" onClick={() => removeWheelPrize(i)} className="text-slate-500 hover:text-red-400"><X size={14} /></button>
-                  </span>
-                ))}
-              </div>
-            </div>
-          </div>
-        ) : (
-          <div className="p-4 max-w-md mx-auto">
-            <div className="flex items-center justify-between mb-8">
-              <button onClick={() => setView('dashboard')} className="p-3 bg-slate-800 rounded-full text-white hover:bg-slate-700 transition-colors">
-                <ChevronRight className="rotate-180" />
+        <div className="p-4 max-w-md mx-auto space-y-6">
+          {/* Settings Header */}
+          <div className="flex items-center justify-between mb-8">
+            <h2 className="text-3xl font-black text-white">Settings</h2>
+            <div className="flex gap-2">
+              <button onClick={() => setShowTutorial(true)} className="bg-slate-800 hover:bg-slate-700 text-slate-300 px-4 py-2 rounded-xl font-bold transition-colors flex items-center gap-2">
+                <HelpCircle size={18} />
+                <span>Help</span>
               </button>
-              <h2 className="text-2xl font-black text-white">{editingId ? 'Edit Goal' : 'New Goal'}</h2>
-              <div className="w-12"></div>
+              <button onClick={handleLogout} className="bg-red-500/10 hover:bg-red-500/20 text-red-400 px-4 py-2 rounded-xl font-bold transition-colors">
+                Sign Out
+              </button>
             </div>
+          </div>
 
-            {/* AI Suggestion Button */}
-            {!editingId && (
-              <div className="mb-8">
+
+
+          <div className="bg-slate-900 rounded-3xl border border-white/10 p-6 shadow-lg">
+            <h3 className="font-bold text-purple-400 mb-4 flex items-center gap-2 uppercase tracking-wider text-xs"><Gift size={16} /> Grand Prizes</h3>
+            <div className="space-y-3 mb-6">
+              {(settings.grandPrizes || []).map((p: any) => (
+                <div key={p.id} className="bg-slate-950/50 p-4 rounded-2xl border border-white/5 hover:border-purple-500/30 transition-colors">
+                  {editingGrandPrize?.id === p.id ? (
+                    <div className="space-y-3">
+                      <input
+                        type="text"
+                        value={editingGrandPrize.name}
+                        onChange={e => setEditingGrandPrize({ ...editingGrandPrize, name: e.target.value })}
+                        className="w-full bg-slate-900 p-3 rounded-xl border border-white/10 text-white text-sm focus:border-purple-500 outline-none"
+                        placeholder="Prize Name"
+                      />
+                      <div className="flex gap-2">
+                        <input
+                          type="number"
+                          value={editingGrandPrize.goal}
+                          onChange={e => setEditingGrandPrize({ ...editingGrandPrize, goal: parseInt(e.target.value) || 0 })}
+                          className="flex-1 bg-slate-900 p-3 rounded-xl border border-white/10 text-white text-sm text-center focus:border-purple-500 outline-none"
+                          placeholder="Points"
+                        />
+                        <button
+                          onClick={() => {
+                            updateGrandPrize(p.id, { name: editingGrandPrize.name, goal: editingGrandPrize.goal });
+                            setEditingGrandPrize(null);
+                          }}
+                          className="bg-green-600 hover:bg-green-500 text-white px-4 py-2 rounded-xl font-bold text-sm transition-colors"
+                        >
+                          Save
+                        </button>
+                        <button
+                          onClick={() => setEditingGrandPrize(null)}
+                          className="bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-xl font-bold text-sm transition-colors"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex gap-3 items-center">
+                      <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center shadow-lg">
+                        <Gift className="text-white" size={24} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-bold text-white truncate">{p.name}</p>
+                        <p className="text-xs text-slate-400">Goal: {p.goal} points{p.timesClaimed > 0 ? ` • Claimed ${p.timesClaimed}x` : ''}</p>
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => setEditingGrandPrize({ ...p })}
+                          className="p-2 rounded-lg text-purple-400 hover:bg-purple-900/20 transition-colors"
+                          title="Edit"
+                        >
+                          <Edit2 size={16} />
+                        </button>
+                        <button
+                          onClick={() => {
+                            const updated = settings.grandPrizes.map((x: any) => x.id === p.id ? { ...x, active: !x.active } : x);
+                            if (db && familyId) setDoc(doc(db, 'families', familyId, 'config', 'main'), { ...settings, grandPrizes: updated });
+                            setSettings({ ...settings, grandPrizes: updated });
+                          }}
+                          className={`p-2 rounded-lg transition-colors ${p.active ? 'text-green-400 bg-green-900/20' : 'text-slate-600 bg-slate-800'}`}
+                          title={p.active ? 'Active' : 'Inactive'}
+                        >
+                          {p.active ? <ToggleRight size={18} /> : <ToggleLeft size={18} />}
+                        </button>
+                        <button
+                          onClick={() => {
+                            const updated = settings.grandPrizes.filter((x: any) => x.id !== p.id);
+                            if (db && familyId) setDoc(doc(db, 'families', familyId, 'config', 'main'), { ...settings, grandPrizes: updated });
+                            setSettings({ ...settings, grandPrizes: updated });
+                          }}
+                          className="text-slate-600 hover:text-red-400 p-2 transition-colors"
+                          title="Delete"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+              <div className="flex gap-2 pt-2">
+                <input
+                  placeholder="Prize Name"
+                  className="flex-1 bg-slate-950 p-3 rounded-xl border border-white/10 text-sm text-white focus:border-purple-500 outline-none"
+                  value={newGrandPrize.name}
+                  onChange={e => setNewGrandPrize({ ...newGrandPrize, name: e.target.value })}
+                />
+                <input
+                  type="number"
+                  placeholder="#"
+                  className="w-20 bg-slate-950 p-3 rounded-xl border border-white/10 text-sm text-white text-center focus:border-purple-500 outline-none"
+                  value={newGrandPrize.goal}
+                  onChange={e => setNewGrandPrize({ ...newGrandPrize, goal: parseInt(e.target.value) || 0 })}
+                />
                 <button
-                  onClick={async () => {
-                    if (_loading) return;
-                    setLoading(true);
-                    try {
-                      const prompt = `List 5 age-appropriate chores or behavioral goals for a toddler (ages 2-5). Return a JSON array of objects with keys: "name" (short title, max 4 words), "icon" (one of: star, smile, heart, zap, moon, sun, utensils, trophy, award, gift), "goal" (recommended stars number 3-8). Output ONLY valid JSON.`;
-                      const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
-                      if (!API_KEY) {
-                        alert("Missing API Key! Please create a .env file with VITE_GEMINI_API_KEY=your_key");
-                        setLoading(false);
-                        return;
-                      }
-
-                      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${API_KEY}`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
-                      });
-
-                      const data = await response.json();
-                      if (data.error) {
-                        throw new Error(data.error.message);
-                      }
-                      const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-                      if (text) {
-                        // Extract JSON from markdown code blocks if present
-                        const jsonMatch = text.match(/\[[\s\S]*\]/);
-                        const jsonStr = jsonMatch ? jsonMatch[0] : text;
-                        try {
-                          const suggestions = JSON.parse(jsonStr);
-
-                          // Show suggestions (using a temporary alert/confirm for MVP, or better: set a state to display them)
-                          // For now, let's pick a random one to demo, or better, add a "Suggestions" UI state.
-                          // Let's add a simple suggestions list below this button.
-                          setFeedback({ visible: true, message: 'Ideas Generated!', type: 'suggestions', data: suggestions });
-                        } catch (e) {
-                          console.error("JSON Parse Error:", e, text);
-                          alert("AI returned invalid data. Try again.");
-                        }
-                      } else {
-                        alert("No suggestions returned.");
-                      }
-                    } catch (e: any) {
-                      console.error(e);
-                      alert(`Error: ${e.message}`);
-                    } finally {
-                      setLoading(false);
-                    }
-                  }}
-                  className="w-full bg-gradient-to-r from-purple-500 to-indigo-600 text-white p-4 rounded-2xl font-black shadow-lg flex items-center justify-center gap-2 hover:scale-[1.02] transition-transform"
+                  onClick={addGrandPrize}
+                  className="bg-purple-600 hover:bg-purple-500 text-white px-4 rounded-xl font-bold text-sm transition-colors shadow-lg shadow-purple-500/20"
                 >
-                  {_loading ? <span className="animate-spin">⏳</span> : <Sparkles size={20} className="text-yellow-300" />}
-                  <span>{_loading ? 'Thinking...' : 'Ask AI for Ideas'}</span>
+                  Add
                 </button>
-
-                {/* Suggestions List */}
-                {feedback.type === 'suggestions' && (
-                  <div className="mt-4 grid grid-cols-1 gap-2 animate-in slide-in-from-top">
-                    {feedback.data.map((s: any, i: number) => (
-                      <button
-                        key={i}
-                        onClick={() => {
-                          setFormData({ name: s.name, goal: s.goal, icon: s.icon, colorIndex: Math.floor(Math.random() * 5) });
-                          setFeedback({ visible: false });
-                        }}
-                        className="bg-slate-800 p-3 rounded-xl text-left flex items-center gap-3 hover:bg-slate-700 transition-colors border border-white/5"
-                      >
-                        <div className="p-2 bg-slate-900 rounded-lg text-xl">
-                          {s.icon === 'star' ? '⭐' : s.icon === 'heart' ? '❤️' : s.icon === 'utensils' ? '🍽️' : '✨'}
-                        </div>
-                        <div>
-                          <div className="font-bold text-white text-sm">{s.name}</div>
-                          <div className="text-slate-400 text-xs">{s.goal} Stars</div>
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-
-            <div className="space-y-4 bg-slate-900 p-6 rounded-3xl border border-white/10">
-              <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Name</label>
-                <input className="w-full p-4 bg-slate-950 rounded-xl border border-white/10 text-lg text-white placeholder:text-slate-600 focus:border-blue-500 outline-none" placeholder="e.g. Clean Room" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
-              </div>
-              <div>
-                <div className="flex justify-between items-baseline mb-2">
-                  <label className="block text-xs font-bold text-slate-500 uppercase">Stars Required</label>
-                  <span className="text-[10px] text-slate-400 font-medium">Require more stars for easier tasks</span>
-                </div>
-                <div className="flex items-center gap-4 bg-slate-950 p-4 rounded-xl border border-white/10">
-                  <input type="range" min="3" max="10" value={formData.goal} onChange={e => setFormData({ ...formData, goal: parseInt(e.target.value) })} className="flex-1 accent-blue-500" />
-                  <span className="font-black text-2xl text-blue-400 w-10 text-center">{formData.goal}</span>
-                </div>
-              </div>
-
-              {/* Icon Selector */}
-              <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Icon</label>
-                <div className="grid grid-cols-5 gap-2">
-                  {Object.entries(ICON_MAP).map(([key, IconComponent]: any) => (
-                    <button
-                      key={key}
-                      type="button"
-                      onClick={() => setFormData({ ...formData, icon: key })}
-                      className={`p-3 rounded-xl border-2 transition-all ${formData.icon === key ? 'border-blue-500 bg-blue-500/20' : 'border-white/10 bg-slate-950 hover:border-blue-400/50'}`}
-                    >
-                      <IconComponent size={24} className={formData.icon === key ? 'text-blue-400' : 'text-slate-400'} />
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Color Selector */}
-              <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Color</label>
-                <div className="grid grid-cols-3 gap-2">
-                  {[
-                    { index: 0, label: 'Pink', gradient: 'from-pink-500 to-rose-500' },
-                    { index: 1, label: 'Purple', gradient: 'from-purple-500 to-indigo-500' },
-                    { index: 2, label: 'Blue', gradient: 'from-blue-500 to-cyan-500' },
-                    { index: 3, label: 'Green', gradient: 'from-green-500 to-emerald-500' },
-                    { index: 4, label: 'Orange', gradient: 'from-yellow-500 to-orange-500' },
-                    { index: 5, label: 'Red', gradient: 'from-red-500 to-pink-500' },
-                  ].map((color) => (
-                    <button
-                      key={color.index}
-                      type="button"
-                      onClick={() => setFormData({ ...formData, colorIndex: color.index })}
-                      className={`p-4 rounded-xl bg-gradient-to-br ${color.gradient} transition-all ${formData.colorIndex === color.index ? 'ring-4 ring-blue-400 scale-105' : 'opacity-70 hover:opacity-100'}`}
-                    >
-                      <span className="text-white font-bold text-xs">{color.label}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="flex gap-3 pt-4">
-                {editingId && <button onClick={() => deleteBehavior()} className="flex-1 py-4 bg-red-500/10 hover:bg-red-500/20 text-red-400 font-bold rounded-xl border border-red-500/20 transition-all">Delete</button>}
-                <button onClick={saveBehavior} className="flex-[2] py-4 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl shadow-lg active:scale-95 transition-all">Save Mission</button>
               </div>
             </div>
           </div>
+
+          <div className="bg-slate-900 rounded-3xl border border-white/10 p-6 shadow-lg">
+            <h3 className="font-bold text-yellow-300 mb-4 flex items-center gap-2 uppercase tracking-wider text-xs"><Gift size={16} /> Egg Prizes</h3>
+            <div className="flex gap-2 mb-4">
+              <input className="flex-1 p-3 rounded-xl border border-white/10 bg-slate-950 text-white text-sm focus:border-yellow-500 outline-none" placeholder="New Prize" value={newPrize} onChange={e => setNewPrize(e.target.value)} onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addWheelPrize())} />
+              <button type="button" onClick={addWheelPrize} className="bg-yellow-500 text-white px-4 rounded-xl font-bold text-lg hover:bg-yellow-600 transition-all active:scale-95">+</button>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {(settings.wheelPrizes || []).map((p: any, i: number) => (
+                <span key={i} className="bg-slate-950 border border-white/10 px-3 py-1.5 rounded-lg text-sm text-slate-700 flex items-center gap-2 shadow-sm">
+                  {p} <button type="button" onClick={() => removeWheelPrize(i)} className="text-slate-500 hover:text-red-400"><X size={14} /></button>
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
+        ) : (
+        <div className="p-4 max-w-md mx-auto">
+          <div className="flex items-center justify-between mb-8">
+            <button onClick={() => setView('dashboard')} className="p-3 bg-slate-800 rounded-full text-white hover:bg-slate-700 transition-colors">
+              <ChevronRight className="rotate-180" />
+            </button>
+            <h2 className="text-2xl font-black text-white">{editingId ? 'Edit Goal' : 'New Goal'}</h2>
+            <div className="w-12"></div>
+          </div>
+
+          {/* AI Suggestion Button */}
+          {!editingId && (
+            <div className="mb-8">
+              <button
+                onClick={async () => {
+                  if (_loading) return;
+                  setLoading(true);
+                  try {
+                    const prompt = `List 5 age-appropriate chores or behavioral goals for a toddler (ages 2-5). Return a JSON array of objects with keys: "name" (short title, max 4 words), "icon" (one of: star, smile, heart, zap, moon, sun, utensils, trophy, award, gift), "goal" (recommended stars number 3-8). Output ONLY valid JSON.`;
+                    const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
+                    if (!API_KEY) {
+                      alert("Missing API Key! Please create a .env file with VITE_GEMINI_API_KEY=your_key");
+                      setLoading(false);
+                      return;
+                    }
+
+                    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${API_KEY}`, {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+                    });
+
+                    const data = await response.json();
+                    if (data.error) {
+                      throw new Error(data.error.message);
+                    }
+                    const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+                    if (text) {
+                      // Extract JSON from markdown code blocks if present
+                      const jsonMatch = text.match(/\[[\s\S]*\]/);
+                      const jsonStr = jsonMatch ? jsonMatch[0] : text;
+                      try {
+                        const suggestions = JSON.parse(jsonStr);
+
+                        // Show suggestions (using a temporary alert/confirm for MVP, or better: set a state to display them)
+                        // For now, let's pick a random one to demo, or better, add a "Suggestions" UI state.
+                        // Let's add a simple suggestions list below this button.
+                        setFeedback({ visible: true, message: 'Ideas Generated!', type: 'suggestions', data: suggestions });
+                      } catch (e) {
+                        console.error("JSON Parse Error:", e, text);
+                        alert("AI returned invalid data. Try again.");
+                      }
+                    } else {
+                      alert("No suggestions returned.");
+                    }
+                  } catch (e: any) {
+                    console.error(e);
+                    alert(`Error: ${e.message}`);
+                  } finally {
+                    setLoading(false);
+                  }
+                }}
+                className="w-full bg-gradient-to-r from-purple-500 to-indigo-600 text-white p-4 rounded-2xl font-black shadow-lg flex items-center justify-center gap-2 hover:scale-[1.02] transition-transform"
+              >
+                {_loading ? <span className="animate-spin">⏳</span> : <Sparkles size={20} className="text-yellow-300" />}
+                <span>{_loading ? 'Thinking...' : 'Ask AI for Ideas'}</span>
+              </button>
+
+              {/* Suggestions List */}
+              {feedback.type === 'suggestions' && (
+                <div className="mt-4 grid grid-cols-1 gap-2 animate-in slide-in-from-top">
+                  {feedback.data.map((s: any, i: number) => (
+                    <button
+                      key={i}
+                      onClick={() => {
+                        setFormData({ name: s.name, goal: s.goal, icon: s.icon, colorIndex: Math.floor(Math.random() * 5) });
+                        setFeedback({ visible: false });
+                      }}
+                      className="bg-slate-800 p-3 rounded-xl text-left flex items-center gap-3 hover:bg-slate-700 transition-colors border border-white/5"
+                    >
+                      <div className="p-2 bg-slate-900 rounded-lg text-xl">
+                        {s.icon === 'star' ? '⭐' : s.icon === 'heart' ? '❤️' : s.icon === 'utensils' ? '🍽️' : '✨'}
+                      </div>
+                      <div>
+                        <div className="font-bold text-white text-sm">{s.name}</div>
+                        <div className="text-slate-400 text-xs">{s.goal} Stars</div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          <div className="space-y-4 bg-slate-900 p-6 rounded-3xl border border-white/10">
+            <div>
+              <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Name</label>
+              <input className="w-full p-4 bg-slate-950 rounded-xl border border-white/10 text-lg text-white placeholder:text-slate-600 focus:border-blue-500 outline-none" placeholder="e.g. Clean Room" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
+            </div>
+            <div>
+              <div className="flex justify-between items-baseline mb-2">
+                <label className="block text-xs font-bold text-slate-500 uppercase">Stars Required</label>
+                <span className="text-[10px] text-slate-400 font-medium">Require more stars for easier tasks</span>
+              </div>
+              <div className="flex items-center gap-4 bg-slate-950 p-4 rounded-xl border border-white/10">
+                <input type="range" min="3" max="10" value={formData.goal} onChange={e => setFormData({ ...formData, goal: parseInt(e.target.value) })} className="flex-1 accent-blue-500" />
+                <span className="font-black text-2xl text-blue-400 w-10 text-center">{formData.goal}</span>
+              </div>
+            </div>
+
+            {/* Icon Selector */}
+            <div>
+              <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Icon</label>
+              <div className="grid grid-cols-5 gap-2">
+                {Object.entries(ICON_MAP).map(([key, IconComponent]: any) => (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => setFormData({ ...formData, icon: key })}
+                    className={`p-3 rounded-xl border-2 transition-all ${formData.icon === key ? 'border-blue-500 bg-blue-500/20' : 'border-white/10 bg-slate-950 hover:border-blue-400/50'}`}
+                  >
+                    <IconComponent size={24} className={formData.icon === key ? 'text-blue-400' : 'text-slate-400'} />
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Color Selector */}
+            <div>
+              <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Color</label>
+              <div className="grid grid-cols-3 gap-2">
+                {[
+                  { index: 0, label: 'Pink', gradient: 'from-pink-500 to-rose-500' },
+                  { index: 1, label: 'Purple', gradient: 'from-purple-500 to-indigo-500' },
+                  { index: 2, label: 'Blue', gradient: 'from-blue-500 to-cyan-500' },
+                  { index: 3, label: 'Green', gradient: 'from-green-500 to-emerald-500' },
+                  { index: 4, label: 'Orange', gradient: 'from-yellow-500 to-orange-500' },
+                  { index: 5, label: 'Red', gradient: 'from-red-500 to-pink-500' },
+                ].map((color) => (
+                  <button
+                    key={color.index}
+                    type="button"
+                    onClick={() => setFormData({ ...formData, colorIndex: color.index })}
+                    className={`p-4 rounded-xl bg-gradient-to-br ${color.gradient} transition-all ${formData.colorIndex === color.index ? 'ring-4 ring-blue-400 scale-105' : 'opacity-70 hover:opacity-100'}`}
+                  >
+                    <span className="text-white font-bold text-xs">{color.label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex gap-3 pt-4">
+              {editingId && <button onClick={() => deleteBehavior()} className="flex-1 py-4 bg-red-500/10 hover:bg-red-500/20 text-red-400 font-bold rounded-xl border border-red-500/20 transition-all">Delete</button>}
+              <button onClick={saveBehavior} className="flex-[2] py-4 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl shadow-lg active:scale-95 transition-all">Save Mission</button>
+            </div>
+          </div>
+        </div>
         )}
       </div>
+      {/* Flying Stars Overlay */}
+      {flyingStars.map(star => (
+        <div
+          key={star.id}
+          className="flying-star"
+          style={{
+            '--start-x': `${star.x}px`,
+            '--start-y': `${star.y}px`,
+            '--target-x': `${star.targetX}px`,
+            '--target-y': `${star.targetY}px`
+          } as React.CSSProperties}
+        >
+          <Star size={32} fill="#FACC15" className="text-yellow-400 drop-shadow-[0_0_10px_rgba(250,204,21,0.8)]" />
+        </div>
+      ))}
+
       {/* Global Confetti System */}
       <ConfettiSystem ref={confettiRef} />
       <style>{`
