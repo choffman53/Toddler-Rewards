@@ -967,7 +967,7 @@ export default function App() {
   // Form State
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState({ name: '', goal: 5, icon: 'star', colorIndex: 0 });
-  const [newGrandPrize, setNewGrandPrize] = useState({ name: '', goal: 10, repeatable: true });
+  const [newGrandPrize, setNewGrandPrize] = useState({ name: '', goal: 10, repeatable: true, imageUrl: '' });
   const [editingGrandPrize, setEditingGrandPrize] = useState<any>(null);
   const [newPrize, setNewPrize] = useState('');
   const [_animateBar, setAnimateBar] = useState(false);
@@ -1304,225 +1304,473 @@ export default function App() {
         attempts++;
       } while (randomImageIndex === lastIndex && attempts < 10);
 
-      const imageUrl = `/prize-${randomImageIndex}.jpg`;
+    } while (randomImageIndex === lastIndex && attempts < 10);
 
-      const newPrize = {
-        id: Date.now().toString(),
-        ...newGrandPrize,
-        active: true,
-        imageUrl: imageUrl,
-        lastClaimedAt: totalRewards // Start progress at 0
-      };
-      setSettings({ ...settings, grandPrizes: [...(settings.grandPrizes || []), newPrize] });
-      setNewGrandPrize({ name: '', goal: 10, repeatable: true });
-    }
-  };
-  // const removeGrandPrize = (id: string) => {
-  //   if(!confirm("Remove?")) return;
-  //   setSettings({...settings, grandPrizes: (settings.grandPrizes || []).filter((p:any) => p.id !== id) });
-  // };
-  // const toggleGrandPrize = (id: string) => {
-  //    setSettings({...settings, grandPrizes: (settings.grandPrizes || []).map((p:any) => p.id === id ? {...p, active: !p.active } : p) });
-  // };
-  const addWheelPrize = () => { if (newPrize.trim()) { setSettings((prev: any) => ({ ...prev, wheelPrizes: [...(prev.wheelPrizes || []), newPrize.trim()] })); setNewPrize(''); } };
-  const removeWheelPrize = (idx: number) => { setSettings((prev: any) => ({ ...prev, wheelPrizes: (prev.wheelPrizes || []).filter((_: any, i: number) => i !== idx) })); };
+    // Use generated image if available, otherwise random
+    const imageUrl = newGrandPrize.imageUrl || `/prize-${randomImageIndex}.jpg`;
 
-  if (!familyId) return <Onboarding onLogin={handleLogin} />;
-  if (showTutorial) return <Tutorial onComplete={() => setShowTutorial(false)} />;
+    const newPrize = {
+      id: Date.now().toString(),
+      ...newGrandPrize,
+      active: true,
+      imageUrl: imageUrl,
+      lastClaimedAt: totalRewards // Start progress at 0
+    };
+    setSettings({ ...settings, grandPrizes: [...(settings.grandPrizes || []), newPrize] });
+    setNewGrandPrize({ name: '', goal: 10, repeatable: true, imageUrl: '' });
+  }
+};
+// const removeGrandPrize = (id: string) => {
+//   if(!confirm("Remove?")) return;
+//   setSettings({...settings, grandPrizes: (settings.grandPrizes || []).filter((p:any) => p.id !== id) });
+// };
+// const toggleGrandPrize = (id: string) => {
+//    setSettings({...settings, grandPrizes: (settings.grandPrizes || []).map((p:any) => p.id === id ? {...p, active: !p.active } : p) });
+// };
+const addWheelPrize = () => { if (newPrize.trim()) { setSettings((prev: any) => ({ ...prev, wheelPrizes: [...(prev.wheelPrizes || []), newPrize.trim()] })); setNewPrize(''); } };
+const removeWheelPrize = (idx: number) => { setSettings((prev: any) => ({ ...prev, wheelPrizes: (prev.wheelPrizes || []).filter((_: any, i: number) => i !== idx) })); };
 
-  return (
-    <div className="min-h-screen bg-slate-950 font-sans pb-24 select-none overflow-x-hidden text-slate-200 relative">
-      <div className="fixed inset-0 bg-[radial-gradient(circle_at_top_left,_var(--tw-gradient-stops))] from-slate-900 via-slate-950 to-black pointer-events-none"></div>
-      <Confetti active={showConfetti} />
+if (!familyId) return <Onboarding onLogin={handleLogin} />;
+if (showTutorial) return <Tutorial onComplete={() => setShowTutorial(false)} />;
+
+return (
+  <div className="min-h-screen bg-slate-950 font-sans pb-24 select-none overflow-x-hidden text-slate-200 relative">
+    <div className="fixed inset-0 bg-[radial-gradient(circle_at_top_left,_var(--tw-gradient-stops))] from-slate-900 via-slate-950 to-black pointer-events-none"></div>
+    <Confetti active={showConfetti} />
 
 
-      <GrandCelebrationOverlay
-        visible={showGrandCelebration}
-        prizeName={grandPrizeName}
-        settings={settings}
-        onClose={() => setShowGrandCelebration(false)}
-        onReset={async () => {
-          // Find the prize that was just claimed and increment its timesClaimed counter
-          const claimedPrize = settings.grandPrizes.find((p: any) => p.name === grandPrizeName);
-          if (claimedPrize) {
-            const updatedPrizes = settings.grandPrizes.map((p: any) =>
-              p.id === claimedPrize.id ? { ...p, lastClaimedAt: totalRewards, active: p.repeatable !== false } : p
-            );
+    <GrandCelebrationOverlay
+      visible={showGrandCelebration}
+      prizeName={grandPrizeName}
+      settings={settings}
+      onClose={() => setShowGrandCelebration(false)}
+      onReset={async () => {
+        // Find the prize that was just claimed and increment its timesClaimed counter
+        const claimedPrize = settings.grandPrizes.find((p: any) => p.name === grandPrizeName);
+        if (claimedPrize) {
+          const updatedPrizes = settings.grandPrizes.map((p: any) =>
+            p.id === claimedPrize.id ? { ...p, lastClaimedAt: totalRewards, active: p.repeatable !== false } : p
+          );
 
-            setSettings({ ...settings, grandPrizes: updatedPrizes });
+          setSettings({ ...settings, grandPrizes: updatedPrizes });
 
-            // Save to Firebase if available
-            if (db && familyId) {
-              await setDoc(doc(db, 'families', familyId, 'config', 'main'), {
-                ...settings,
-                grandPrizes: updatedPrizes
-              });
-            }
+          // Save to Firebase if available
+          if (db && familyId) {
+            await setDoc(doc(db, 'families', familyId, 'config', 'main'), {
+              ...settings,
+              grandPrizes: updatedPrizes
+            });
           }
+        }
+      }}
+    />
+    {/* Prize Wheel / Surprise Egg Modal */}
+    {showWheel && (
+      <SurpriseEggModal
+        prizes={settings.wheelPrizes}
+        settings={settings}
+        onClose={() => setShowWheel(false)}
+        onWin={(prize: string) => {
+          // Optional: Add logic if needed when prize is won
+          console.log('Won:', prize);
+
+          // setShowWheel(false); // Don't close immediately, let user click 'Collect'
         }}
       />
-      {/* Prize Wheel / Surprise Egg Modal */}
-      {showWheel && (
-        <SurpriseEggModal
-          prizes={settings.wheelPrizes}
-          settings={settings}
-          onClose={() => setShowWheel(false)}
-          onWin={(prize: string) => {
-            // Optional: Add logic if needed when prize is won
-            console.log('Won:', prize);
+    )}
 
-            // setShowWheel(false); // Don't close immediately, let user click 'Collect'
-          }}
-        />
-      )}
+    <FeedbackPopup visible={toast?.visible} message={toast?.message} />
 
-      <FeedbackPopup visible={toast?.visible} message={toast?.message} />
-
-      <header className="fixed top-0 left-0 right-0 bg-slate-950/90 backdrop-blur-md p-6 pt-[calc(1.5rem+env(safe-area-inset-top))] flex justify-between items-center z-50 shadow-lg border-b border-white/5">
-        <div className="flex items-center gap-3">
-          <div className="w-14 h-14 rounded-2xl overflow-hidden shadow-lg cursor-pointer hover:opacity-80 transition-opacity" onClick={handleLogout}>
-            <img src="/mascot.png" alt="avatar" className="w-full h-full object-cover" />
+    <header className="fixed top-0 left-0 right-0 bg-slate-950/90 backdrop-blur-md p-6 pt-[calc(1.5rem+env(safe-area-inset-top))] flex justify-between items-center z-50 shadow-lg border-b border-white/5">
+      <div className="flex items-center gap-3">
+        <div className="w-14 h-14 rounded-2xl overflow-hidden shadow-lg cursor-pointer hover:opacity-80 transition-opacity" onClick={handleLogout}>
+          <img src="/mascot.png" alt="avatar" className="w-full h-full object-cover" />
+        </div>
+        <div>
+          <h1 className="font-black text-xl text-white tracking-tight">Hello, {familyId}!</h1>
+          <div className="flex items-center gap-2 mt-1">
+            <div className="flex items-center gap-1 bg-orange-500/20 border border-orange-500/50 px-2 py-0.5 rounded-full">
+              <Flame size={12} className="text-orange-500 fill-orange-500 animate-pulse" />
+              <span className="text-[10px] font-bold text-orange-200 uppercase tracking-wider">{settings.streak || 1} Day Streak</span>
+            </div>
           </div>
+        </div>
+      </div>
+      <div className="flex gap-3">
+        <button onClick={() => setView(view === 'settings' ? 'dashboard' : 'settings')} className="p-3 rounded-full bg-slate-900/50 border border-white/10 text-white hover:bg-slate-800 transition-colors"><Settings size={20} /></button>
+      </div>
+    </header>
+
+    <div className={`max-w-5xl mx-auto p-4 relative z-10 ${view === 'dashboard' ? (isAndroid ? 'pt-[540px]' : 'pt-[380px]') : (isAndroid ? 'pt-52' : 'pt-32')}`}>
+      {/* Dashboard */}
+      {view === 'dashboard' && (
+        <div className="p-4 max-w-md mx-auto pb-32">
+          <div className={`fixed ${isAndroid ? 'top-[160px]' : 'top-[88px]'} left-0 right-0 z-40 bg-slate-950/95 backdrop-blur-xl pb-4 px-4 pt-2 shadow-xl border-b border-white/5 mb-4`}>
+            <div className="max-w-md mx-auto">
+              <NextPrizeCard totalRewards={totalRewards} settings={settings} targetRef={targetRef} onUpdatePrize={updateGrandPrize} scale={barScale} />
+            </div>
+          </div>
+          <GiftBoxSection
+            prizes={settings.grandPrizes}
+            totalRewards={totalRewards}
+            onClaimPrize={claimGrandPrize}
+            onFeature={toggleFeature}
+            featuredId={settings.featuredPrizeId}
+          />
+
           <div>
-            <h1 className="font-black text-xl text-white tracking-tight">Hello, {familyId}!</h1>
-            <div className="flex items-center gap-2 mt-1">
-              <div className="flex items-center gap-1 bg-orange-500/20 border border-orange-500/50 px-2 py-0.5 rounded-full">
-                <Flame size={12} className="text-orange-500 fill-orange-500 animate-pulse" />
-                <span className="text-[10px] font-bold text-orange-200 uppercase tracking-wider">{settings.streak || 1} Day Streak</span>
-              </div>
+            <div className="flex justify-between items-end mb-4 px-2">
+              <h3 className="text-white font-bold text-xl tracking-tight">Active Missions</h3>
             </div>
+            <div className="grid grid-cols-1 gap-4">
+              {behaviors.map(b => (
+                <GoalListItem
+                  key={b.id}
+                  behavior={b}
+                  onUpdate={updateCount}
+                  onClaim={claimReward}
+                  onDelete={deleteBehavior}
+                  onEdit={(b: any) => { setEditingId(b.id); setFormData({ name: b.name, goal: b.goal, icon: b.icon, colorIndex: b.colorIndex }); setView('settings'); }}
+                />
+              ))}
+            </div>
+            {/* Add New Goal Button */}
+            <button
+              onClick={() => { setEditingId(null); setFormData({ name: '', goal: 5, icon: 'star', colorIndex: 0 }); setView('settings'); }}
+              className="w-full mt-4 bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-white font-bold py-4 px-6 rounded-2xl shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2"
+            >
+              <Settings size={20} />
+              <span>Manage Goals & Settings</span>
+            </button>
           </div>
         </div>
-        <div className="flex gap-3">
-          <button onClick={() => setView(view === 'settings' ? 'dashboard' : 'settings')} className="p-3 rounded-full bg-slate-900/50 border border-white/10 text-white hover:bg-slate-800 transition-colors"><Settings size={20} /></button>
-        </div>
-      </header>
-
-      <div className={`max-w-5xl mx-auto p-4 relative z-10 ${view === 'dashboard' ? (isAndroid ? 'pt-[480px]' : 'pt-[380px]') : (isAndroid ? 'pt-44' : 'pt-32')}`}>
-        {/* Dashboard */}
-        {view === 'dashboard' && (
-          <div className="p-4 max-w-md mx-auto pb-32">
-            <div className={`fixed ${isAndroid ? 'top-[145px]' : 'top-[88px]'} left-0 right-0 z-40 bg-slate-950/95 backdrop-blur-xl pb-4 px-4 pt-2 shadow-xl border-b border-white/5 mb-4`}>
-              <div className="max-w-md mx-auto">
-                <NextPrizeCard totalRewards={totalRewards} settings={settings} targetRef={targetRef} onUpdatePrize={updateGrandPrize} scale={barScale} />
-              </div>
-            </div>
-            <GiftBoxSection
-              prizes={settings.grandPrizes}
-              totalRewards={totalRewards}
-              onClaimPrize={claimGrandPrize}
-              onFeature={toggleFeature}
-              featuredId={settings.featuredPrizeId}
-            />
-
-            <div>
-              <div className="flex justify-between items-end mb-4 px-2">
-                <h3 className="text-white font-bold text-xl tracking-tight">Active Missions</h3>
-              </div>
-              <div className="grid grid-cols-1 gap-4">
-                {behaviors.map(b => (
-                  <GoalListItem
-                    key={b.id}
-                    behavior={b}
-                    onUpdate={updateCount}
-                    onClaim={claimReward}
-                    onDelete={deleteBehavior}
-                    onEdit={(b: any) => { setEditingId(b.id); setFormData({ name: b.name, goal: b.goal, icon: b.icon, colorIndex: b.colorIndex }); setView('settings'); }}
-                  />
-                ))}
-              </div>
-              {/* Add New Goal Button */}
-              <button
-                onClick={() => { setEditingId(null); setFormData({ name: '', goal: 5, icon: 'star', colorIndex: 0 }); setView('settings'); }}
-                className="w-full mt-4 bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-white font-bold py-4 px-6 rounded-2xl shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2"
-              >
-                <Settings size={20} />
-                <span>Manage Goals & Settings</span>
+      )}
+      {view === 'settings' && (
+        <div className="p-4 max-w-md mx-auto space-y-6">
+          {/* Settings Header */}
+          <div className="flex items-center justify-between mb-8">
+            <h2 className="text-3xl font-black text-white">Settings</h2>
+            <div className="flex gap-2">
+              <button onClick={() => setShowTutorial(true)} className="bg-slate-800 hover:bg-slate-700 text-slate-300 px-4 py-2 rounded-xl font-bold transition-colors flex items-center gap-2">
+                <HelpCircle size={18} />
+                <span>Help</span>
+              </button>
+              <button onClick={handleLogout} className="bg-red-500/10 hover:bg-red-500/20 text-red-400 px-4 py-2 rounded-xl font-bold transition-colors">
+                Sign Out
               </button>
             </div>
           </div>
-        )}
-        {view === 'settings' && (
-          <div className="p-4 max-w-md mx-auto space-y-6">
-            {/* Settings Header */}
-            <div className="flex items-center justify-between mb-8">
-              <h2 className="text-3xl font-black text-white">Settings</h2>
-              <div className="flex gap-2">
-                <button onClick={() => setShowTutorial(true)} className="bg-slate-800 hover:bg-slate-700 text-slate-300 px-4 py-2 rounded-xl font-bold transition-colors flex items-center gap-2">
-                  <HelpCircle size={18} />
-                  <span>Help</span>
-                </button>
-                <button onClick={handleLogout} className="bg-red-500/10 hover:bg-red-500/20 text-red-400 px-4 py-2 rounded-xl font-bold transition-colors">
-                  Sign Out
+
+          <div className="bg-slate-900 rounded-3xl border border-white/10 p-6 shadow-lg mb-8">
+            <h3 className="font-bold text-blue-400 mb-4 flex items-center gap-2 uppercase tracking-wider text-xs"><Star size={16} /> Manage Goals</h3>
+
+            {/* Current Goals List */}
+            {!showGoalForm && !editingId && (
+              <div className="space-y-3 mb-6">
+                {behaviors.map(b => (
+                  <div key={b.id} className="bg-slate-950/50 p-4 rounded-2xl border border-white/5 flex items-center justify-between hover:border-blue-500/30 transition-colors">
+                    <div className="flex items-center gap-3">
+                      <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${GRADIENTS[b.colorIndex % GRADIENTS.length]} flex items-center justify-center shadow-lg`}>
+                        {React.createElement(ICON_MAP[b.icon] || Star, { size: 24, className: 'text-white' })}
+                      </div>
+                      <div>
+                        <p className="font-bold text-white">{b.name}</p>
+                        <p className="text-xs text-slate-400">{b.goal} Stars</p>
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <button onClick={() => { setEditingId(b.id); setFormData({ name: b.name, goal: b.goal, icon: b.icon, colorIndex: b.colorIndex }); }} className="p-2 rounded-lg text-blue-400 hover:bg-blue-900/20 transition-colors"><Edit2 size={16} /></button>
+                      <button onClick={() => deleteBehavior(b.id)} className="p-2 rounded-lg text-slate-600 hover:text-red-400 transition-colors"><Trash2 size={16} /></button>
+                    </div>
+                  </div>
+                ))}
+                <button
+                  onClick={() => { setShowGoalForm(true); setEditingId(null); setFormData({ name: '', goal: 5, icon: 'star', colorIndex: 0 }); }}
+                  className="w-full mt-4 bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 rounded-xl shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2"
+                >
+                  <Plus size={20} />
+                  <span>Add New Goal</span>
                 </button>
               </div>
-            </div>
+            )}
 
-            <div className="bg-slate-900 rounded-3xl border border-white/10 p-6 shadow-lg mb-8">
-              <h3 className="font-bold text-blue-400 mb-4 flex items-center gap-2 uppercase tracking-wider text-xs"><Star size={16} /> Manage Goals</h3>
-
-              {/* Current Goals List */}
-              {!showGoalForm && !editingId && (
-                <div className="space-y-3 mb-6">
-                  {behaviors.map(b => (
-                    <div key={b.id} className="bg-slate-950/50 p-4 rounded-2xl border border-white/5 flex items-center justify-between hover:border-blue-500/30 transition-colors">
-                      <div className="flex items-center gap-3">
-                        <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${GRADIENTS[b.colorIndex % GRADIENTS.length]} flex items-center justify-center shadow-lg`}>
-                          {React.createElement(ICON_MAP[b.icon] || Star, { size: 24, className: 'text-white' })}
-                        </div>
-                        <div>
-                          <p className="font-bold text-white">{b.name}</p>
-                          <p className="text-xs text-slate-400">{b.goal} Stars</p>
-                        </div>
-                      </div>
-                      <div className="flex gap-2">
-                        <button onClick={() => { setEditingId(b.id); setFormData({ name: b.name, goal: b.goal, icon: b.icon, colorIndex: b.colorIndex }); }} className="p-2 rounded-lg text-blue-400 hover:bg-blue-900/20 transition-colors"><Edit2 size={16} /></button>
-                        <button onClick={() => deleteBehavior(b.id)} className="p-2 rounded-lg text-slate-600 hover:text-red-400 transition-colors"><Trash2 size={16} /></button>
-                      </div>
-                    </div>
-                  ))}
-                  <button
-                    onClick={() => { setShowGoalForm(true); setEditingId(null); setFormData({ name: '', goal: 5, icon: 'star', colorIndex: 0 }); }}
-                    className="w-full mt-4 bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 rounded-xl shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2"
-                  >
-                    <Plus size={20} />
-                    <span>Add New Goal</span>
-                  </button>
+            {/* Goal Form (New or Edit) */}
+            {(showGoalForm || editingId) && (
+              <div className="animate-in slide-in-from-bottom duration-300 bg-slate-950/50 p-4 rounded-2xl border border-white/5">
+                <div className="flex items-center justify-between mb-6">
+                  <h4 className="text-lg font-bold text-white">{editingId ? 'Edit Goal' : 'New Goal'}</h4>
+                  <button onClick={() => { setShowGoalForm(false); setEditingId(null); }} className="p-2 text-slate-400 hover:text-white bg-slate-800 rounded-full"><X size={16} /></button>
                 </div>
-              )}
 
-              {/* Goal Form (New or Edit) */}
-              {(showGoalForm || editingId) && (
-                <div className="animate-in slide-in-from-bottom duration-300 bg-slate-950/50 p-4 rounded-2xl border border-white/5">
-                  <div className="flex items-center justify-between mb-6">
-                    <h4 className="text-lg font-bold text-white">{editingId ? 'Edit Goal' : 'New Goal'}</h4>
-                    <button onClick={() => { setShowGoalForm(false); setEditingId(null); }} className="p-2 text-slate-400 hover:text-white bg-slate-800 rounded-full"><X size={16} /></button>
+                {/* AI Suggestion Button for Goals */}
+                {!editingId && (
+                  <div className="mb-6 space-y-2">
+                    <input
+                      value={customPrompt}
+                      onChange={(e) => setCustomPrompt(e.target.value)}
+                      placeholder="What do you want to work on? (e.g. Manners)"
+                      className="w-full bg-slate-900 p-3 rounded-xl border border-white/10 text-white text-sm focus:border-blue-500 outline-none placeholder:text-slate-600"
+                    />
+                    <button
+                      onClick={() => handleAIGenerate('goal')}
+                      className="w-full bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 p-3 rounded-xl font-bold border border-blue-500/20 flex items-center justify-center gap-2 transition-colors"
+                    >
+                      <Sparkles size={16} />
+                      <span>Suggest Goals</span>
+                    </button>
+                  </div>
+                )}
+
+                {/* Suggestions List */}
+                {feedback.type === 'goal' && feedback.visible && (
+                  <div className="mb-6 relative bg-slate-900 p-4 rounded-xl border border-white/10">
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-xs font-bold text-blue-400 uppercase">AI Suggestions</span>
+                      <button onClick={() => setFeedback({ ...feedback, visible: false })} className="text-slate-400 hover:text-white"><X size={16} /></button>
+                    </div>
+                    <div className="grid grid-cols-1 gap-2 animate-in slide-in-from-top">
+                      {feedback.data.map((s: any, i: number) => (
+                        <button
+                          key={i}
+                          onClick={() => {
+                            setFormData({ name: s.name, goal: s.goal, icon: s.icon, colorIndex: Math.floor(Math.random() * 5) });
+                            setFeedback({ visible: false });
+                          }}
+                          className="bg-slate-950 p-3 rounded-xl text-left flex items-center gap-3 hover:bg-slate-800 transition-colors border border-white/5"
+                        >
+                          <div className="p-2 bg-slate-900 rounded-lg text-xl">
+                            {s.icon === 'star' ? '⭐' : s.icon === 'heart' ? '❤️' : s.icon === 'utensils' ? '🍽️' : '✨'}
+                          </div>
+                          <div>
+                            <div className="font-bold text-white text-sm">{s.name}</div>
+                            <div className="text-slate-400 text-xs">{s.goal} Stars</div>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Name</label>
+                    <input className="w-full p-4 bg-slate-900 rounded-xl border border-white/10 text-lg text-white placeholder:text-slate-600 focus:border-blue-500 outline-none" placeholder="e.g. Clean Room" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
+                  </div>
+                  <div>
+                    <div className="flex justify-between items-baseline mb-2">
+                      <label className="block text-xs font-bold text-slate-500 uppercase">Stars Required</label>
+                      <span className="text-[10px] text-slate-400 font-medium">Require more stars for easier tasks</span>
+                    </div>
+                    <div className="flex items-center gap-4 bg-slate-900 p-4 rounded-xl border border-white/10">
+                      <input type="range" min="3" max="10" value={formData.goal} onChange={e => setFormData({ ...formData, goal: parseInt(e.target.value) })} className="flex-1 accent-blue-500" />
+                      <span className="font-black text-2xl text-blue-400 w-10 text-center">{formData.goal}</span>
+                    </div>
                   </div>
 
-                  {/* AI Suggestion Button for Goals */}
-                  {!editingId && (
-                    <div className="mb-6 space-y-2">
+                  {/* Icon Selector */}
+                  <div>
+                    <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Icon</label>
+                    <div className="grid grid-cols-5 gap-2">
+                      {Object.entries(ICON_MAP).map(([key, IconComponent]: any) => (
+                        <button
+                          key={key}
+                          type="button"
+                          onClick={() => setFormData({ ...formData, icon: key })}
+                          className={`p-3 rounded-xl border-2 transition-all ${formData.icon === key ? 'border-blue-500 bg-blue-500/20' : 'border-white/10 bg-slate-900 hover:border-blue-400/50'}`}
+                        >
+                          <IconComponent size={24} className={formData.icon === key ? 'text-blue-400' : 'text-slate-400'} />
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Color Selector */}
+                  <div>
+                    <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Color</label>
+                    <div className="grid grid-cols-3 gap-2">
+                      {[
+                        { index: 0, label: 'Pink', gradient: 'from-pink-500 to-rose-500' },
+                        { index: 1, label: 'Purple', gradient: 'from-purple-500 to-indigo-500' },
+                        { index: 2, label: 'Blue', gradient: 'from-blue-500 to-cyan-500' },
+                        { index: 3, label: 'Green', gradient: 'from-green-500 to-emerald-500' },
+                        { index: 4, label: 'Orange', gradient: 'from-yellow-500 to-orange-500' },
+                        { index: 5, label: 'Red', gradient: 'from-red-500 to-pink-500' },
+                      ].map((color) => (
+                        <button
+                          key={color.index}
+                          type="button"
+                          onClick={() => setFormData({ ...formData, colorIndex: color.index })}
+                          className={`p-4 rounded-xl bg-gradient-to-br ${color.gradient} transition-all ${formData.colorIndex === color.index ? 'ring-4 ring-blue-400 scale-105' : 'opacity-70 hover:opacity-100'}`}
+                        >
+                          <span className="text-white font-bold text-xs">{color.label}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="flex gap-3 pt-4">
+                    <button
+                      onClick={() => { setShowGoalForm(false); setEditingId(null); setFormData({ name: '', goal: 5, icon: 'star', colorIndex: 0 }); }}
+                      className="flex-1 py-4 bg-slate-700 hover:bg-slate-600 text-white font-bold rounded-xl transition-all"
+                    >
+                      Cancel
+                    </button>
+                    {editingId && <button onClick={() => deleteBehavior()} className="flex-1 py-4 bg-red-500/10 hover:bg-red-500/20 text-red-400 font-bold rounded-xl border border-red-500/20 transition-all">Delete</button>}
+                    <button onClick={saveBehavior} className="flex-[2] py-4 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl shadow-lg active:scale-95 transition-all">Save Mission</button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="bg-slate-900 rounded-3xl border border-white/10 p-6 shadow-lg mb-8">
+            <h3 className="font-bold text-purple-400 mb-4 flex items-center gap-2 uppercase tracking-wider text-xs"><Gift size={16} /> Grand Prizes</h3>
+
+
+
+
+
+            <div className="space-y-3 mb-6">
+              {(settings.grandPrizes || []).map((p: any) => (
+                <div key={p.id} className="bg-slate-950/50 p-4 rounded-2xl border border-white/5 hover:border-purple-500/30 transition-colors">
+                  {editingGrandPrize?.id === p.id ? (
+                    <div className="space-y-3">
                       <input
-                        value={customPrompt}
-                        onChange={(e) => setCustomPrompt(e.target.value)}
-                        placeholder="What do you want to work on? (e.g. Manners)"
-                        className="w-full bg-slate-900 p-3 rounded-xl border border-white/10 text-white text-sm focus:border-blue-500 outline-none placeholder:text-slate-600"
+                        type="text"
+                        value={editingGrandPrize.name}
+                        onChange={e => setEditingGrandPrize({ ...editingGrandPrize, name: e.target.value })}
+                        className="w-full bg-slate-900 p-3 rounded-xl border border-white/10 text-white text-sm focus:border-purple-500 outline-none"
+                        placeholder="Prize Name"
                       />
-                      <button
-                        onClick={() => handleAIGenerate('goal')}
-                        className="w-full bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 p-3 rounded-xl font-bold border border-blue-500/20 flex items-center justify-center gap-2 transition-colors"
-                      >
-                        <Sparkles size={16} />
-                        <span>Suggest Goals</span>
-                      </button>
+                      <div className="flex flex-col gap-2">
+                        <input
+                          type="number"
+                          value={editingGrandPrize.goal}
+                          onChange={e => setEditingGrandPrize({ ...editingGrandPrize, goal: parseInt(e.target.value) || 0 })}
+                          className="w-full bg-slate-900 p-3 rounded-xl border border-white/10 text-white text-sm text-center focus:border-purple-500 outline-none"
+                          placeholder="Points"
+                        />
+
+                        {/* Image Preview & Gen */}
+                        <div className="relative h-32 rounded-xl overflow-hidden bg-slate-900 border border-white/10 group">
+                          {editingGrandPrize.imageUrl && <img src={editingGrandPrize.imageUrl} className="w-full h-full object-cover" />}
+                          <button
+                            onClick={() => handleGenerateImage(editingGrandPrize.name, true)}
+                            className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity font-bold text-white gap-2"
+                          >
+                            <ImageIcon size={20} /> {_loading ? 'Generating...' : 'Regenerate Image'}
+                          </button>
+                          {!editingGrandPrize.imageUrl && (
+                            <button
+                              onClick={() => handleGenerateImage(editingGrandPrize.name, true)}
+                              className="absolute inset-0 flex items-center justify-center font-bold text-purple-400 gap-2"
+                            >
+                              <Sparkles size={20} /> Generate Image
+                            </button>
+                          )}
+                        </div>
+
+                        <div className="flex items-center justify-between bg-slate-900 p-3 rounded-xl border border-white/10">
+                          <span className="text-xs font-bold text-slate-400 uppercase">Repeatable?</span>
+                          <button
+                            onClick={() => setEditingGrandPrize({ ...editingGrandPrize, repeatable: !editingGrandPrize.repeatable })}
+                            className={`transition-colors ${editingGrandPrize.repeatable !== false ? 'text-green-400' : 'text-slate-600'}`}
+                          >
+                            {editingGrandPrize.repeatable !== false ? <ToggleRight size={24} /> : <ToggleLeft size={24} />}
+                          </button>
+                        </div>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => {
+                              updateGrandPrize(p.id, { name: editingGrandPrize.name, goal: editingGrandPrize.goal, repeatable: editingGrandPrize.repeatable });
+                              setEditingGrandPrize(null);
+                            }}
+                            className="flex-1 bg-green-600 hover:bg-green-500 text-white px-4 py-2 rounded-xl font-bold text-sm transition-colors"
+                          >
+                            Save
+                          </button>
+                          <button
+                            onClick={() => setEditingGrandPrize(null)}
+                            className="flex-1 bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-xl font-bold text-sm transition-colors"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex gap-3 items-center">
+                      <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center shadow-lg">
+                        <Gift className="text-white" size={24} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-bold text-white truncate">{p.name}</p>
+                        <p className="text-xs text-slate-400">Goal: {p.goal} points{p.timesClaimed > 0 ? ` • Claimed ${p.timesClaimed}x` : ''}</p>
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => setEditingGrandPrize({ ...p })}
+                          className="p-2 rounded-lg text-purple-400 hover:bg-purple-900/20 transition-colors"
+                          title="Edit"
+                        >
+                          <Edit2 size={16} />
+                        </button>
+                        <button
+                          onClick={() => {
+                            const updated = settings.grandPrizes.map((x: any) => x.id === p.id ? { ...x, active: !x.active } : x);
+                            if (db && familyId) setDoc(doc(db, 'families', familyId, 'config', 'main'), { ...settings, grandPrizes: updated });
+                            setSettings({ ...settings, grandPrizes: updated });
+                          }}
+                          className={`p-2 rounded-lg transition-colors ${p.active ? 'text-green-400 bg-green-900/20' : 'text-slate-600 bg-slate-800'}`}
+                          title={p.active ? 'Active' : 'Inactive'}
+                        >
+                          {p.active ? <ToggleRight size={18} /> : <ToggleLeft size={18} />}
+                        </button>
+                        <button
+                          onClick={() => {
+                            const updated = settings.grandPrizes.filter((x: any) => x.id !== p.id);
+                            if (db && familyId) setDoc(doc(db, 'families', familyId, 'config', 'main'), { ...settings, grandPrizes: updated });
+                            setSettings({ ...settings, grandPrizes: updated });
+                          }}
+                          className="text-slate-600 hover:text-red-400 p-2 transition-colors"
+                          title="Delete"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
                     </div>
                   )}
+                </div>
+              ))}
+              {!showPrizeForm && (
+                <button
+                  onClick={() => setShowPrizeForm(true)}
+                  className="w-full mt-4 bg-purple-600 hover:bg-purple-500 text-white font-bold py-4 rounded-xl shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2"
+                >
+                  <Plus size={20} />
+                  <span>Add New Prize</span>
+                </button>
+              )}
 
-                  {/* Suggestions List */}
-                  {feedback.type === 'goal' && feedback.visible && (
+              {showPrizeForm && (
+                <div className="animate-in slide-in-from-bottom duration-300 bg-slate-950/50 p-4 rounded-2xl border border-white/5 mt-4">
+                  <div className="flex justify-between items-center mb-4">
+                    <h4 className="font-bold text-white">New Grand Prize</h4>
+                    <button onClick={() => setShowPrizeForm(false)} className="p-2 text-slate-400 hover:text-white bg-slate-800 rounded-full"><X size={16} /></button>
+                  </div>
+
+                  <button
+                    onClick={() => handleAIGenerate('grand_prize')}
+                    className="w-full mb-4 bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 p-3 rounded-xl font-bold border border-purple-500/20 flex items-center justify-center gap-2 transition-colors"
+                  >
+                    <Sparkles size={16} />
+                    <span>Suggest Grand Prizes</span>
+                  </button>
+
+                  {feedback.type === 'grand_prize' && feedback.visible && (
                     <div className="mb-6 relative bg-slate-900 p-4 rounded-xl border border-white/10">
                       <div className="flex justify-between items-center mb-2">
-                        <span className="text-xs font-bold text-blue-400 uppercase">AI Suggestions</span>
+                        <span className="text-xs font-bold text-purple-400 uppercase">AI Suggestions</span>
                         <button onClick={() => setFeedback({ ...feedback, visible: false })} className="text-slate-400 hover:text-white"><X size={16} /></button>
                       </div>
                       <div className="grid grid-cols-1 gap-2 animate-in slide-in-from-top">
@@ -1530,17 +1778,15 @@ export default function App() {
                           <button
                             key={i}
                             onClick={() => {
-                              setFormData({ name: s.name, goal: s.goal, icon: s.icon, colorIndex: Math.floor(Math.random() * 5) });
+                              setNewGrandPrize({ name: s.name, goal: s.goal, repeatable: true });
                               setFeedback({ visible: false });
                             }}
                             className="bg-slate-950 p-3 rounded-xl text-left flex items-center gap-3 hover:bg-slate-800 transition-colors border border-white/5"
                           >
-                            <div className="p-2 bg-slate-900 rounded-lg text-xl">
-                              {s.icon === 'star' ? '⭐' : s.icon === 'heart' ? '❤️' : s.icon === 'utensils' ? '🍽️' : '✨'}
-                            </div>
+                            <div className="p-2 bg-slate-900 rounded-lg text-xl">🎁</div>
                             <div>
                               <div className="font-bold text-white text-sm">{s.name}</div>
-                              <div className="text-slate-400 text-xs">{s.goal} Stars</div>
+                              <div className="text-slate-400 text-xs">{s.goal} Points</div>
                             </div>
                           </button>
                         ))}
@@ -1548,332 +1794,129 @@ export default function App() {
                     </div>
                   )}
 
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Name</label>
-                      <input className="w-full p-4 bg-slate-900 rounded-xl border border-white/10 text-lg text-white placeholder:text-slate-600 focus:border-blue-500 outline-none" placeholder="e.g. Clean Room" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
-                    </div>
-                    <div>
-                      <div className="flex justify-between items-baseline mb-2">
-                        <label className="block text-xs font-bold text-slate-500 uppercase">Stars Required</label>
-                        <span className="text-[10px] text-slate-400 font-medium">Require more stars for easier tasks</span>
-                      </div>
-                      <div className="flex items-center gap-4 bg-slate-900 p-4 rounded-xl border border-white/10">
-                        <input type="range" min="3" max="10" value={formData.goal} onChange={e => setFormData({ ...formData, goal: parseInt(e.target.value) })} className="flex-1 accent-blue-500" />
-                        <span className="font-black text-2xl text-blue-400 w-10 text-center">{formData.goal}</span>
-                      </div>
-                    </div>
+                  <div className="flex flex-col gap-2">
+                    <input
+                      placeholder="Prize Name"
+                      className="w-full bg-slate-900 p-3 rounded-xl border border-white/10 text-sm text-white focus:border-purple-500 outline-none"
+                      value={newGrandPrize.name}
+                      onChange={e => setNewGrandPrize({ ...newGrandPrize, name: e.target.value })}
+                    />
+                    <input
+                      type="number"
+                      placeholder="Points Goal"
+                      className="w-full bg-slate-900 p-3 rounded-xl border border-white/10 text-sm text-white text-center focus:border-purple-500 outline-none"
+                      value={newGrandPrize.goal}
+                      onChange={e => setNewGrandPrize({ ...newGrandPrize, goal: parseInt(e.target.value) || 0 })}
+                    />
 
-                    {/* Icon Selector */}
-                    <div>
-                      <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Icon</label>
-                      <div className="grid grid-cols-5 gap-2">
-                        {Object.entries(ICON_MAP).map(([key, IconComponent]: any) => (
-                          <button
-                            key={key}
-                            type="button"
-                            onClick={() => setFormData({ ...formData, icon: key })}
-                            className={`p-3 rounded-xl border-2 transition-all ${formData.icon === key ? 'border-blue-500 bg-blue-500/20' : 'border-white/10 bg-slate-900 hover:border-blue-400/50'}`}
-                          >
-                            <IconComponent size={24} className={formData.icon === key ? 'text-blue-400' : 'text-slate-400'} />
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Color Selector */}
-                    <div>
-                      <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Color</label>
-                      <div className="grid grid-cols-3 gap-2">
-                        {[
-                          { index: 0, label: 'Pink', gradient: 'from-pink-500 to-rose-500' },
-                          { index: 1, label: 'Purple', gradient: 'from-purple-500 to-indigo-500' },
-                          { index: 2, label: 'Blue', gradient: 'from-blue-500 to-cyan-500' },
-                          { index: 3, label: 'Green', gradient: 'from-green-500 to-emerald-500' },
-                          { index: 4, label: 'Orange', gradient: 'from-yellow-500 to-orange-500' },
-                          { index: 5, label: 'Red', gradient: 'from-red-500 to-pink-500' },
-                        ].map((color) => (
-                          <button
-                            key={color.index}
-                            type="button"
-                            onClick={() => setFormData({ ...formData, colorIndex: color.index })}
-                            className={`p-4 rounded-xl bg-gradient-to-br ${color.gradient} transition-all ${formData.colorIndex === color.index ? 'ring-4 ring-blue-400 scale-105' : 'opacity-70 hover:opacity-100'}`}
-                          >
-                            <span className="text-white font-bold text-xs">{color.label}</span>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="flex gap-3 pt-4">
+                    {/* Image Preview & Gen */}
+                    <div className="relative h-32 rounded-xl overflow-hidden bg-slate-900 border border-white/10 group">
+                      {newGrandPrize.imageUrl && <img src={newGrandPrize.imageUrl} className="w-full h-full object-cover" />}
                       <button
-                        onClick={() => { setShowGoalForm(false); setEditingId(null); setFormData({ name: '', goal: 5, icon: 'star', colorIndex: 0 }); }}
-                        className="flex-1 py-4 bg-slate-700 hover:bg-slate-600 text-white font-bold rounded-xl transition-all"
+                        onClick={() => handleGenerateImage(newGrandPrize.name, false)}
+                        className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity font-bold text-white gap-2"
                       >
-                        Cancel
+                        <ImageIcon size={20} /> {_loading ? 'Generating...' : 'Regenerate Image'}
                       </button>
-                      {editingId && <button onClick={() => deleteBehavior()} className="flex-1 py-4 bg-red-500/10 hover:bg-red-500/20 text-red-400 font-bold rounded-xl border border-red-500/20 transition-all">Delete</button>}
-                      <button onClick={saveBehavior} className="flex-[2] py-4 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl shadow-lg active:scale-95 transition-all">Save Mission</button>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <div className="bg-slate-900 rounded-3xl border border-white/10 p-6 shadow-lg mb-8">
-              <h3 className="font-bold text-purple-400 mb-4 flex items-center gap-2 uppercase tracking-wider text-xs"><Gift size={16} /> Grand Prizes</h3>
-
-
-
-
-
-              <div className="space-y-3 mb-6">
-                {(settings.grandPrizes || []).map((p: any) => (
-                  <div key={p.id} className="bg-slate-950/50 p-4 rounded-2xl border border-white/5 hover:border-purple-500/30 transition-colors">
-                    {editingGrandPrize?.id === p.id ? (
-                      <div className="space-y-3">
-                        <input
-                          type="text"
-                          value={editingGrandPrize.name}
-                          onChange={e => setEditingGrandPrize({ ...editingGrandPrize, name: e.target.value })}
-                          className="w-full bg-slate-900 p-3 rounded-xl border border-white/10 text-white text-sm focus:border-purple-500 outline-none"
-                          placeholder="Prize Name"
-                        />
-                        <div className="flex flex-col gap-2">
-                          <input
-                            type="number"
-                            value={editingGrandPrize.goal}
-                            onChange={e => setEditingGrandPrize({ ...editingGrandPrize, goal: parseInt(e.target.value) || 0 })}
-                            className="w-full bg-slate-900 p-3 rounded-xl border border-white/10 text-white text-sm text-center focus:border-purple-500 outline-none"
-                            placeholder="Points"
-                          />
-                          <div className="flex items-center justify-between bg-slate-900 p-3 rounded-xl border border-white/10">
-                            <span className="text-xs font-bold text-slate-400 uppercase">Repeatable?</span>
-                            <button
-                              onClick={() => setEditingGrandPrize({ ...editingGrandPrize, repeatable: !editingGrandPrize.repeatable })}
-                              className={`transition-colors ${editingGrandPrize.repeatable !== false ? 'text-green-400' : 'text-slate-600'}`}
-                            >
-                              {editingGrandPrize.repeatable !== false ? <ToggleRight size={24} /> : <ToggleLeft size={24} />}
-                            </button>
-                          </div>
-                          <div className="flex gap-2">
-                            <button
-                              onClick={() => {
-                                updateGrandPrize(p.id, { name: editingGrandPrize.name, goal: editingGrandPrize.goal, repeatable: editingGrandPrize.repeatable });
-                                setEditingGrandPrize(null);
-                              }}
-                              className="flex-1 bg-green-600 hover:bg-green-500 text-white px-4 py-2 rounded-xl font-bold text-sm transition-colors"
-                            >
-                              Save
-                            </button>
-                            <button
-                              onClick={() => setEditingGrandPrize(null)}
-                              className="flex-1 bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-xl font-bold text-sm transition-colors"
-                            >
-                              Cancel
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="flex gap-3 items-center">
-                        <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center shadow-lg">
-                          <Gift className="text-white" size={24} />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-bold text-white truncate">{p.name}</p>
-                          <p className="text-xs text-slate-400">Goal: {p.goal} points{p.timesClaimed > 0 ? ` • Claimed ${p.timesClaimed}x` : ''}</p>
-                        </div>
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => setEditingGrandPrize({ ...p })}
-                            className="p-2 rounded-lg text-purple-400 hover:bg-purple-900/20 transition-colors"
-                            title="Edit"
-                          >
-                            <Edit2 size={16} />
-                          </button>
-                          <button
-                            onClick={() => {
-                              const updated = settings.grandPrizes.map((x: any) => x.id === p.id ? { ...x, active: !x.active } : x);
-                              if (db && familyId) setDoc(doc(db, 'families', familyId, 'config', 'main'), { ...settings, grandPrizes: updated });
-                              setSettings({ ...settings, grandPrizes: updated });
-                            }}
-                            className={`p-2 rounded-lg transition-colors ${p.active ? 'text-green-400 bg-green-900/20' : 'text-slate-600 bg-slate-800'}`}
-                            title={p.active ? 'Active' : 'Inactive'}
-                          >
-                            {p.active ? <ToggleRight size={18} /> : <ToggleLeft size={18} />}
-                          </button>
-                          <button
-                            onClick={() => {
-                              const updated = settings.grandPrizes.filter((x: any) => x.id !== p.id);
-                              if (db && familyId) setDoc(doc(db, 'families', familyId, 'config', 'main'), { ...settings, grandPrizes: updated });
-                              setSettings({ ...settings, grandPrizes: updated });
-                            }}
-                            className="text-slate-600 hover:text-red-400 p-2 transition-colors"
-                            title="Delete"
-                          >
-                            <Trash2 size={16} />
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                ))}
-                {!showPrizeForm && (
-                  <button
-                    onClick={() => setShowPrizeForm(true)}
-                    className="w-full mt-4 bg-purple-600 hover:bg-purple-500 text-white font-bold py-4 rounded-xl shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2"
-                  >
-                    <Plus size={20} />
-                    <span>Add New Prize</span>
-                  </button>
-                )}
-
-                {showPrizeForm && (
-                  <div className="animate-in slide-in-from-bottom duration-300 bg-slate-950/50 p-4 rounded-2xl border border-white/5 mt-4">
-                    <div className="flex justify-between items-center mb-4">
-                      <h4 className="font-bold text-white">New Grand Prize</h4>
-                      <button onClick={() => setShowPrizeForm(false)} className="p-2 text-slate-400 hover:text-white bg-slate-800 rounded-full"><X size={16} /></button>
-                    </div>
-
-                    <button
-                      onClick={() => handleAIGenerate('grand_prize')}
-                      className="w-full mb-4 bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 p-3 rounded-xl font-bold border border-purple-500/20 flex items-center justify-center gap-2 transition-colors"
-                    >
-                      <Sparkles size={16} />
-                      <span>Suggest Grand Prizes</span>
-                    </button>
-
-                    {feedback.type === 'grand_prize' && feedback.visible && (
-                      <div className="mb-6 relative bg-slate-900 p-4 rounded-xl border border-white/10">
-                        <div className="flex justify-between items-center mb-2">
-                          <span className="text-xs font-bold text-purple-400 uppercase">AI Suggestions</span>
-                          <button onClick={() => setFeedback({ ...feedback, visible: false })} className="text-slate-400 hover:text-white"><X size={16} /></button>
-                        </div>
-                        <div className="grid grid-cols-1 gap-2 animate-in slide-in-from-top">
-                          {feedback.data.map((s: any, i: number) => (
-                            <button
-                              key={i}
-                              onClick={() => {
-                                setNewGrandPrize({ name: s.name, goal: s.goal, repeatable: true });
-                                setFeedback({ visible: false });
-                              }}
-                              className="bg-slate-950 p-3 rounded-xl text-left flex items-center gap-3 hover:bg-slate-800 transition-colors border border-white/5"
-                            >
-                              <div className="p-2 bg-slate-900 rounded-lg text-xl">🎁</div>
-                              <div>
-                                <div className="font-bold text-white text-sm">{s.name}</div>
-                                <div className="text-slate-400 text-xs">{s.goal} Points</div>
-                              </div>
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    <div className="flex flex-col gap-2">
-                      <input
-                        placeholder="Prize Name"
-                        className="w-full bg-slate-900 p-3 rounded-xl border border-white/10 text-sm text-white focus:border-purple-500 outline-none"
-                        value={newGrandPrize.name}
-                        onChange={e => setNewGrandPrize({ ...newGrandPrize, name: e.target.value })}
-                      />
-                      <input
-                        type="number"
-                        placeholder="Points Goal"
-                        className="w-full bg-slate-900 p-3 rounded-xl border border-white/10 text-sm text-white text-center focus:border-purple-500 outline-none"
-                        value={newGrandPrize.goal}
-                        onChange={e => setNewGrandPrize({ ...newGrandPrize, goal: parseInt(e.target.value) || 0 })}
-                      />
-                      <div className="flex items-center justify-between bg-slate-900 p-3 rounded-xl border border-white/10">
-                        <span className="text-xs font-bold text-slate-400 uppercase">Repeatable?</span>
+                      {!newGrandPrize.imageUrl && (
                         <button
-                          onClick={() => setNewGrandPrize({ ...newGrandPrize, repeatable: !newGrandPrize.repeatable })}
-                          className={`transition-colors ${newGrandPrize.repeatable !== false ? 'text-green-400' : 'text-slate-600'}`}
+                          onClick={() => handleGenerateImage(newGrandPrize.name, false)}
+                          className="absolute inset-0 flex items-center justify-center font-bold text-purple-400 gap-2"
                         >
-                          {newGrandPrize.repeatable !== false ? <ToggleRight size={24} /> : <ToggleLeft size={24} />}
+                          <Sparkles size={20} /> Generate Image
                         </button>
-                      </div>
+                      )}
+                    </div>
+
+                    <div className="flex items-center justify-between bg-slate-900 p-3 rounded-xl border border-white/10">
+                      <span className="text-xs font-bold text-slate-400 uppercase">Repeatable?</span>
                       <button
-                        onClick={addGrandPrize}
-                        className="w-full bg-purple-600 hover:bg-purple-500 text-white font-bold py-3 rounded-xl shadow-lg mt-2"
+                        onClick={() => setNewGrandPrize({ ...newGrandPrize, repeatable: !newGrandPrize.repeatable })}
+                        className={`transition-colors ${newGrandPrize.repeatable !== false ? 'text-green-400' : 'text-slate-600'}`}
                       >
-                        Add Prize
+                        {newGrandPrize.repeatable !== false ? <ToggleRight size={24} /> : <ToggleLeft size={24} />}
                       </button>
                     </div>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div className="bg-slate-900 rounded-3xl border border-white/10 p-6 shadow-lg">
-              <h3 className="font-bold text-pink-400 mb-4 flex items-center gap-2 uppercase tracking-wider text-xs"><Gift size={16} /> Egg Prizes</h3>
-
-              <button
-                onClick={() => handleAIGenerate('egg_prize')}
-                className="w-full mb-4 bg-pink-500/10 hover:bg-pink-500/20 text-pink-400 p-3 rounded-xl font-bold border border-pink-500/20 flex items-center justify-center gap-2 transition-colors"
-              >
-                <Sparkles size={16} />
-                <span>Suggest Egg Prizes</span>
-              </button>
-
-              {feedback.type === 'egg_prize' && feedback.visible && (
-                <div className="mb-6 grid grid-cols-1 gap-2 animate-in slide-in-from-top">
-                  {feedback.data.map((s: string, i: number) => (
                     <button
-                      key={i}
-                      onClick={() => {
-                        setNewPrize(s);
-                        setFeedback({ visible: false });
-                      }}
-                      className="bg-slate-950 p-3 rounded-xl text-left flex items-center gap-3 hover:bg-slate-800 transition-colors border border-white/5"
+                      onClick={addGrandPrize}
+                      className="w-full bg-purple-600 hover:bg-purple-500 text-white font-bold py-3 rounded-xl shadow-lg mt-2"
                     >
-                      <div className="p-2 bg-slate-900 rounded-lg text-xl">🥚</div>
-                      <div className="font-bold text-white text-sm">{s}</div>
+                      Add Prize
                     </button>
-                  ))}
+                  </div>
                 </div>
               )}
+            </div>
+          </div>
 
-              <div className="flex gap-2 mb-4">
-                <input className="flex-1 p-3 rounded-xl border border-white/10 bg-slate-950 text-white text-sm focus:border-yellow-500 outline-none" placeholder="New Prize" value={newPrize} onChange={e => setNewPrize(e.target.value)} onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addWheelPrize())} />
-                <button type="button" onClick={addWheelPrize} className="bg-yellow-500 text-white px-4 rounded-xl font-bold text-lg hover:bg-yellow-600 transition-all active:scale-95">+</button>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {(settings.wheelPrizes || []).map((p: any, i: number) => (
-                  <span key={i} className="bg-slate-950 border border-white/10 px-3 py-1.5 rounded-lg text-sm text-slate-700 flex items-center gap-2 shadow-sm">
-                    {p} <button type="button" onClick={() => removeWheelPrize(i)} className="text-slate-500 hover:text-red-400"><X size={14} /></button>
-                  </span>
+          <div className="bg-slate-900 rounded-3xl border border-white/10 p-6 shadow-lg">
+            <h3 className="font-bold text-pink-400 mb-4 flex items-center gap-2 uppercase tracking-wider text-xs"><Gift size={16} /> Egg Prizes</h3>
+
+            <button
+              onClick={() => handleAIGenerate('egg_prize')}
+              className="w-full mb-4 bg-pink-500/10 hover:bg-pink-500/20 text-pink-400 p-3 rounded-xl font-bold border border-pink-500/20 flex items-center justify-center gap-2 transition-colors"
+            >
+              <Sparkles size={16} />
+              <span>Suggest Egg Prizes</span>
+            </button>
+
+            {feedback.type === 'egg_prize' && feedback.visible && (
+              <div className="mb-6 grid grid-cols-1 gap-2 animate-in slide-in-from-top">
+                {feedback.data.map((s: string, i: number) => (
+                  <button
+                    key={i}
+                    onClick={() => {
+                      setNewPrize(s);
+                      setFeedback({ visible: false });
+                    }}
+                    className="bg-slate-950 p-3 rounded-xl text-left flex items-center gap-3 hover:bg-slate-800 transition-colors border border-white/5"
+                  >
+                    <div className="p-2 bg-slate-900 rounded-lg text-xl">🥚</div>
+                    <div className="font-bold text-white text-sm">{s}</div>
+                  </button>
                 ))}
               </div>
+            )}
+
+            <div className="flex gap-2 mb-4">
+              <input className="flex-1 p-3 rounded-xl border border-white/10 bg-slate-950 text-white text-sm focus:border-yellow-500 outline-none" placeholder="New Prize" value={newPrize} onChange={e => setNewPrize(e.target.value)} onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addWheelPrize())} />
+              <button type="button" onClick={addWheelPrize} className="bg-yellow-500 text-white px-4 rounded-xl font-bold text-lg hover:bg-yellow-600 transition-all active:scale-95">+</button>
             </div>
-
-            <button onClick={() => setView('dashboard')} className="w-full mt-8 bg-slate-800 hover:bg-slate-700 text-white font-bold py-4 rounded-2xl transition-colors shadow-lg border border-white/10">
-              Done / Save Settings
-            </button>
+            <div className="flex flex-wrap gap-2">
+              {(settings.wheelPrizes || []).map((p: any, i: number) => (
+                <span key={i} className="bg-slate-950 border border-white/10 px-3 py-1.5 rounded-lg text-sm text-slate-700 flex items-center gap-2 shadow-sm">
+                  {p} <button type="button" onClick={() => removeWheelPrize(i)} className="text-slate-500 hover:text-red-400"><X size={14} /></button>
+                </span>
+              ))}
+            </div>
           </div>
-        )}
 
-      </div>
-      {/* Flying Stars Overlay */}
-      {flyingStars.map(star => (
-        <div
-          key={star.id}
-          className="flying-star"
-          style={{
-            '--start-x': `${star.x}px`,
-            '--start-y': `${star.y}px`,
-            '--target-x': `${star.targetX}px`,
-            '--target-y': `${star.targetY}px`
-          } as React.CSSProperties}
-        >
-          <Star size={32} fill="#FACC15" className="text-yellow-400 drop-shadow-[0_0_10px_rgba(250,204,21,0.8)]" />
+          <button onClick={() => setView('dashboard')} className="w-full mt-8 bg-slate-800 hover:bg-slate-700 text-white font-bold py-4 rounded-2xl transition-colors shadow-lg border border-white/10">
+            Done / Save Settings
+          </button>
         </div>
-      ))}
+      )}
 
-      {/* Global Confetti System */}
-      <ConfettiSystem ref={confettiRef} />
-      <style>{`
+    </div>
+    {/* Flying Stars Overlay */}
+    {flyingStars.map(star => (
+      <div
+        key={star.id}
+        className="flying-star"
+        style={{
+          '--start-x': `${star.x}px`,
+          '--start-y': `${star.y}px`,
+          '--target-x': `${star.targetX}px`,
+          '--target-y': `${star.targetY}px`
+        } as React.CSSProperties}
+      >
+        <Star size={32} fill="#FACC15" className="text-yellow-400 drop-shadow-[0_0_10px_rgba(250,204,21,0.8)]" />
+      </div>
+    ))}
+
+    {/* Global Confetti System */}
+    <ConfettiSystem ref={confettiRef} />
+    <style>{`
         @keyframes explode { 0% { transform: scale(1); opacity: 1; } 100% { transform: scale(20); opacity: 0; } }
         .animate-explode { animation: explode 1s ease-out forwards; }
         .scrollbar-hide::-webkit-scrollbar { display: none; }
@@ -1915,6 +1958,6 @@ export default function App() {
         @keyframes bounce-slow { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
         .animate-bounce-slow { animation: bounce-slow 2s ease-in-out infinite; }
       `}</style>
-    </div >
-  );
+  </div >
+);
 }
