@@ -134,17 +134,9 @@ const NextPrizeCard = ({ totalRewards, settings, targetRef, scale = 1 }: any) =>
   const pointsNeeded = nextPrize.pointsNeeded;
   const progress = nextPrize.progress;
 
-  // Determine background image
-  const [randomImage, setRandomImage] = useState('');
-
-  useEffect(() => {
-    // Randomize image on mount (page refresh) or when featured prize changes
-    setRandomImage(`/prize-${Math.floor(Math.random() * 8) + 1}.jpg`);
-  }, [settings.featuredPrizeId]);
-
-  // Determine background image - use random image for hero
+  // Determine background image - use prize image
   const heroStyle = {
-    backgroundImage: `url(${randomImage || '/prize-1.jpg'})`,
+    backgroundImage: `url(${nextPrize.imageUrl || '/prize-1.jpg'})`,
     backgroundSize: 'cover',
     backgroundPosition: 'center'
   };
