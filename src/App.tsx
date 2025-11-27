@@ -326,7 +326,7 @@ const FunStar = ({ filled, size = 32 }: { filled: boolean, size?: number }) => (
   </div>
 );
 
-const GoalListItem = ({ behavior, onUpdate, onClaim, onDelete, onEdit }: any) => {
+const GoalListItem = ({ behavior, onUpdate, onClaim }: any) => {
   const Icon = ICON_MAP[behavior.icon] || Star;
   const currentStars = behavior.count || 0;
   const totalStars = behavior.goal;
@@ -374,9 +374,7 @@ const GoalListItem = ({ behavior, onUpdate, onClaim, onDelete, onEdit }: any) =>
   const gradient = gradients[gradientIndex];
   const shadowColor = shadowColors[gradientIndex];
 
-  const handleDelete = () => {
-    onDelete(behavior.id);
-  };
+
 
   return (
     <div className={`relative rounded-3xl p-5 overflow-hidden group transition-all hover:scale-[1.02] ${isComplete ? 'bg-gradient-to-br from-yellow-400 to-orange-500' : 'bg-slate-900'} border border-white/10 hover:border-white/20 shadow-lg`}>
@@ -455,23 +453,7 @@ const GoalListItem = ({ behavior, onUpdate, onClaim, onDelete, onEdit }: any) =>
         </div>
       </div>
 
-      {/* Edit and Delete Buttons */}
-      <div className="absolute top-3 right-3 flex gap-2 z-20">
-        <button
-          onClick={() => onEdit(behavior)}
-          className="text-slate-500 hover:text-cyan-400 opacity-0 group-hover:opacity-100 transition-all p-2 bg-black/20 rounded-lg hover:bg-cyan-500/20"
-          title="Edit"
-        >
-          <Edit2 size={16} />
-        </button>
-        <button
-          onClick={handleDelete}
-          className="text-slate-500 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all p-2 bg-black/20 rounded-lg hover:bg-red-500/20"
-          title="Delete"
-        >
-          <Trash2 size={16} />
-        </button>
-      </div>
+
     </div >
   );
 };
@@ -1622,26 +1604,7 @@ export default function App() {
 
 
 
-              {feedback.type === 'grand_prize' && feedback.visible && (
-                <div className="mb-6 grid grid-cols-1 gap-2 animate-in slide-in-from-top">
-                  {feedback.data.map((s: any, i: number) => (
-                    <button
-                      key={i}
-                      onClick={() => {
-                        setNewGrandPrize({ name: s.name, goal: s.goal });
-                        setFeedback({ visible: false });
-                      }}
-                      className="bg-slate-950 p-3 rounded-xl text-left flex items-center gap-3 hover:bg-slate-800 transition-colors border border-white/5"
-                    >
-                      <div className="p-2 bg-slate-900 rounded-lg text-xl">🎁</div>
-                      <div>
-                        <div className="font-bold text-white text-sm">{s.name}</div>
-                        <div className="text-slate-400 text-xs">{s.goal} Points</div>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              )}
+
 
               <div className="space-y-3 mb-6">
                 {(settings.grandPrizes || []).map((p: any) => (
@@ -1750,6 +1713,33 @@ export default function App() {
                       <Sparkles size={16} />
                       <span>Suggest Grand Prizes</span>
                     </button>
+
+                    {feedback.type === 'grand_prize' && feedback.visible && (
+                      <div className="mb-6 relative bg-slate-900 p-4 rounded-xl border border-white/10">
+                        <div className="flex justify-between items-center mb-2">
+                          <span className="text-xs font-bold text-purple-400 uppercase">AI Suggestions</span>
+                          <button onClick={() => setFeedback({ ...feedback, visible: false })} className="text-slate-400 hover:text-white"><X size={16} /></button>
+                        </div>
+                        <div className="grid grid-cols-1 gap-2 animate-in slide-in-from-top">
+                          {feedback.data.map((s: any, i: number) => (
+                            <button
+                              key={i}
+                              onClick={() => {
+                                setNewGrandPrize({ name: s.name, goal: s.goal });
+                                setFeedback({ visible: false });
+                              }}
+                              className="bg-slate-950 p-3 rounded-xl text-left flex items-center gap-3 hover:bg-slate-800 transition-colors border border-white/5"
+                            >
+                              <div className="p-2 bg-slate-900 rounded-lg text-xl">🎁</div>
+                              <div>
+                                <div className="font-bold text-white text-sm">{s.name}</div>
+                                <div className="text-slate-400 text-xs">{s.goal} Points</div>
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
 
                     <div className="flex flex-col gap-2">
                       <input
