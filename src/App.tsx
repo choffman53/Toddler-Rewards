@@ -191,7 +191,7 @@ const NextPrizeCard = ({ totalRewards, settings, targetRef, scale = 1 }: any) =>
               <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/diagonal-stripes.png')] opacity-20"></div>
             </div>
             {/* Shine Effect - Vivid Glow Wipe */}
-            <div className={`absolute top-0 bottom-0 w-32 bg-gradient-to-r from-transparent via-purple-500 via-pink-500 via-white to-transparent skew-x-12 blur-md mix-blend-screen transition-all duration-[2500ms] ease-in-out ${scale > 1 ? 'translate-x-[600px]' : '-translate-x-[150px]'}`}></div>
+            <div className={`absolute top-0 bottom-0 w-40 bg-gradient-to-r from-transparent via-purple-500 via-pink-500 via-yellow-400 to-transparent skew-x-12 blur-md transition-all duration-[2500ms] ease-in-out ${scale > 1 ? 'translate-x-[600px]' : '-translate-x-[160px]'}`}></div>
           </div>
         </div>
       </div>
