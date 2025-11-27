@@ -949,7 +949,7 @@ export default function App() {
   // Form State
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState({ name: '', goal: 5, icon: 'star', colorIndex: 0 });
-  const [newGrandPrize, setNewGrandPrize] = useState({ name: '', goal: 10 });
+  const [newGrandPrize, setNewGrandPrize] = useState({ name: '', goal: 10, repeatable: true });
   const [editingGrandPrize, setEditingGrandPrize] = useState<any>(null);
   const [newPrize, setNewPrize] = useState('');
   const [_animateBar, setAnimateBar] = useState(false);
@@ -1295,7 +1295,8 @@ export default function App() {
         imageUrl: imageUrl
       };
       setSettings({ ...settings, grandPrizes: [...(settings.grandPrizes || []), newPrize] });
-      setNewGrandPrize({ name: '', goal: 10 });
+      setSettings({ ...settings, grandPrizes: [...(settings.grandPrizes || []), newPrize] });
+      setNewGrandPrize({ name: '', goal: 10, repeatable: true });
     }
   };
   // const removeGrandPrize = (id: string) => {
@@ -1327,7 +1328,7 @@ export default function App() {
           const claimedPrize = settings.grandPrizes.find((p: any) => p.name === grandPrizeName);
           if (claimedPrize) {
             const updatedPrizes = settings.grandPrizes.map((p: any) =>
-              p.id === claimedPrize.id ? { ...p, lastClaimedAt: totalRewards } : p
+              p.id === claimedPrize.id ? { ...p, lastClaimedAt: totalRewards, active: p.repeatable !== false } : p
             );
 
             setSettings({ ...settings, grandPrizes: updatedPrizes });
@@ -1628,10 +1629,19 @@ export default function App() {
                             className="w-full bg-slate-900 p-3 rounded-xl border border-white/10 text-white text-sm text-center focus:border-purple-500 outline-none"
                             placeholder="Points"
                           />
+                          <div className="flex items-center justify-between bg-slate-900 p-3 rounded-xl border border-white/10">
+                            <span className="text-xs font-bold text-slate-400 uppercase">Repeatable?</span>
+                            <button
+                              onClick={() => setEditingGrandPrize({ ...editingGrandPrize, repeatable: !editingGrandPrize.repeatable })}
+                              className={`transition-colors ${editingGrandPrize.repeatable !== false ? 'text-green-400' : 'text-slate-600'}`}
+                            >
+                              {editingGrandPrize.repeatable !== false ? <ToggleRight size={24} /> : <ToggleLeft size={24} />}
+                            </button>
+                          </div>
                           <div className="flex gap-2">
                             <button
                               onClick={() => {
-                                updateGrandPrize(p.id, { name: editingGrandPrize.name, goal: editingGrandPrize.goal });
+                                updateGrandPrize(p.id, { name: editingGrandPrize.name, goal: editingGrandPrize.goal, repeatable: editingGrandPrize.repeatable });
                                 setEditingGrandPrize(null);
                               }}
                               className="flex-1 bg-green-600 hover:bg-green-500 text-white px-4 py-2 rounded-xl font-bold text-sm transition-colors"
@@ -1727,7 +1737,7 @@ export default function App() {
                             <button
                               key={i}
                               onClick={() => {
-                                setNewGrandPrize({ name: s.name, goal: s.goal });
+                                setNewGrandPrize({ name: s.name, goal: s.goal, repeatable: true });
                                 setFeedback({ visible: false });
                               }}
                               className="bg-slate-950 p-3 rounded-xl text-left flex items-center gap-3 hover:bg-slate-800 transition-colors border border-white/5"
@@ -1757,6 +1767,15 @@ export default function App() {
                         value={newGrandPrize.goal}
                         onChange={e => setNewGrandPrize({ ...newGrandPrize, goal: parseInt(e.target.value) || 0 })}
                       />
+                      <div className="flex items-center justify-between bg-slate-900 p-3 rounded-xl border border-white/10">
+                        <span className="text-xs font-bold text-slate-400 uppercase">Repeatable?</span>
+                        <button
+                          onClick={() => setNewGrandPrize({ ...newGrandPrize, repeatable: !newGrandPrize.repeatable })}
+                          className={`transition-colors ${newGrandPrize.repeatable !== false ? 'text-green-400' : 'text-slate-600'}`}
+                        >
+                          {newGrandPrize.repeatable !== false ? <ToggleRight size={24} /> : <ToggleLeft size={24} />}
+                        </button>
+                      </div>
                       <button
                         onClick={addGrandPrize}
                         className="w-full bg-purple-600 hover:bg-purple-500 text-white font-bold py-3 rounded-xl shadow-lg mt-2"
