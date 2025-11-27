@@ -1239,6 +1239,7 @@ export default function App() {
 
         // setView('dashboard'); // Don't close settings automatically
         setEditingId(null);
+        setShowGoalForm(false);
         setFormData({ name: '', goal: 5, icon: 'star', colorIndex: 0 });
         return;
       }
@@ -1250,7 +1251,9 @@ export default function App() {
       } else {
         await addDoc(ref, { ...formData, count: 0, completions: 0, createdAt: serverTimestamp() });
       }
-      // setView('dashboard');
+      setEditingId(null);
+      setShowGoalForm(false);
+      setFormData({ name: '', goal: 5, icon: 'star', colorIndex: 0 });
     } catch (error) {
       console.error('Error saving behavior:', error);
       alert('Failed to save goal. Please try again.');
@@ -1392,12 +1395,14 @@ export default function App() {
         </div>
       </header>
 
-      <div className="max-w-5xl mx-auto p-4 relative z-10 pt-32">
+      <div className="max-w-5xl mx-auto p-4 relative z-10 pt-[380px]">
         {/* Dashboard */}
         {view === 'dashboard' && (
           <div className="p-4 max-w-md mx-auto pb-32">
-            <div className="sticky top-[88px] z-20 bg-slate-950/95 backdrop-blur-xl pb-4 -mx-4 px-4 pt-2 shadow-xl border-b border-white/5 mb-8">
-              <NextPrizeCard totalRewards={totalRewards} settings={settings} targetRef={targetRef} onUpdatePrize={updateGrandPrize} scale={barScale} />
+            <div className="fixed top-[88px] left-0 right-0 z-40 bg-slate-950/95 backdrop-blur-xl pb-4 px-4 pt-2 shadow-xl border-b border-white/5 mb-8">
+              <div className="max-w-md mx-auto">
+                <NextPrizeCard totalRewards={totalRewards} settings={settings} targetRef={targetRef} onUpdatePrize={updateGrandPrize} scale={barScale} />
+              </div>
             </div>
             <GiftBoxSection
               prizes={settings.grandPrizes}
@@ -1615,13 +1620,7 @@ export default function App() {
             <div className="bg-slate-900 rounded-3xl border border-white/10 p-6 shadow-lg mb-8">
               <h3 className="font-bold text-purple-400 mb-4 flex items-center gap-2 uppercase tracking-wider text-xs"><Gift size={16} /> Grand Prizes</h3>
 
-              <button
-                onClick={() => handleAIGenerate('grand_prize')}
-                className="w-full mb-4 bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 p-3 rounded-xl font-bold border border-purple-500/20 flex items-center justify-center gap-2 transition-colors"
-              >
-                <Sparkles size={16} />
-                <span>Suggest Grand Prizes</span>
-              </button>
+
 
               {feedback.type === 'grand_prize' && feedback.visible && (
                 <div className="mb-6 grid grid-cols-1 gap-2 animate-in slide-in-from-top">
@@ -1743,6 +1742,15 @@ export default function App() {
                       <h4 className="font-bold text-white">New Grand Prize</h4>
                       <button onClick={() => setShowPrizeForm(false)} className="p-2 text-slate-400 hover:text-white bg-slate-800 rounded-full"><X size={16} /></button>
                     </div>
+
+                    <button
+                      onClick={() => handleAIGenerate('grand_prize')}
+                      className="w-full mb-4 bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 p-3 rounded-xl font-bold border border-purple-500/20 flex items-center justify-center gap-2 transition-colors"
+                    >
+                      <Sparkles size={16} />
+                      <span>Suggest Grand Prizes</span>
+                    </button>
+
                     <div className="flex flex-col gap-2">
                       <input
                         placeholder="Prize Name"
