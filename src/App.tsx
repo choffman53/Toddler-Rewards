@@ -1,3 +1,4 @@
+// Force Vercel Rebuild
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import {
   Rocket, Star, Gift, Plus, Trash2, Trophy, Settings, Sparkles,
