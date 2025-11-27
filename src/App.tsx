@@ -15,6 +15,7 @@ import {
   getFirestore, collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot,
   serverTimestamp, increment, setDoc
 } from 'firebase/firestore';
+import { Capacitor } from '@capacitor/core';
 
 // Import Google Font: Outfit
 if (typeof window !== 'undefined') {
@@ -891,6 +892,7 @@ const FeedbackPopup = ({ visible, message = 'XP Added!' }: any) => visible ? <di
 // --- MAIN APP ---
 export default function App() {
   const [familyId, setFamilyId] = useState<string | null>(localStorage.getItem('family_id'));
+  const isAndroid = Capacitor.getPlatform() === 'android';
   // Load initial state from LocalStorage if available
   const [behaviors, setBehaviors] = useState<any[]>(() => {
     if (typeof window !== 'undefined') {
@@ -1377,7 +1379,7 @@ export default function App() {
         </div>
       </header>
 
-      <div className={`max-w-5xl mx-auto p-4 relative z-10 ${view === 'dashboard' ? 'pt-[380px]' : 'pt-32'}`}>
+      <div className={`max-w-5xl mx-auto p-4 relative z-10 ${view === 'dashboard' ? (isAndroid ? 'pt-[450px]' : 'pt-[380px]') : (isAndroid ? 'pt-48' : 'pt-32')}`}>
         {/* Dashboard */}
         {view === 'dashboard' && (
           <div className="p-4 max-w-md mx-auto pb-32">
