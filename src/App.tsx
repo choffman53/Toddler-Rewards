@@ -189,6 +189,8 @@ const NextPrizeCard = ({ totalRewards, settings, targetRef, scale = 1 }: any) =>
             >
               <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/diagonal-stripes.png')] opacity-20"></div>
             </div>
+            {/* Shine Effect */}
+            <div className={`absolute top-0 bottom-0 w-20 bg-gradient-to-r from-transparent via-white/80 to-transparent skew-x-12 blur-sm transition-all duration-1000 ${scale > 1 ? 'translate-x-[600px]' : '-translate-x-[100px]'}`}></div>
           </div>
         </div>
       </div>
@@ -949,6 +951,7 @@ export default function App() {
   const [customPrompt, setCustomPrompt] = useState('');
   const [toast, setToast] = useState<{ visible: boolean, message: string } | null>(null);
   const [showGoalForm, setShowGoalForm] = useState(false);
+  const [showPrizeForm, setShowPrizeForm] = useState(false);
   const [barScale, setBarScale] = useState(1);
 
   // UI State
@@ -1369,7 +1372,7 @@ export default function App() {
 
       <FeedbackPopup visible={toast?.visible} message={toast?.message} />
 
-      <header className="sticky top-0 bg-slate-950/90 backdrop-blur-md p-6 pt-[calc(1.5rem+env(safe-area-inset-top))] flex justify-between items-center relative z-30 shadow-lg border-b border-white/5">
+      <header className="fixed top-0 left-0 right-0 bg-slate-950/90 backdrop-blur-md p-6 pt-[calc(1.5rem+env(safe-area-inset-top))] flex justify-between items-center z-50 shadow-lg border-b border-white/5">
         <div className="flex items-center gap-3">
           <div className="w-14 h-14 rounded-2xl overflow-hidden shadow-lg cursor-pointer hover:opacity-80 transition-opacity" onClick={handleLogout}>
             <img src="/mascot.png" alt="avatar" className="w-full h-full object-cover" />
@@ -1389,7 +1392,7 @@ export default function App() {
         </div>
       </header>
 
-      <div className="max-w-5xl mx-auto p-4 relative z-10">
+      <div className="max-w-5xl mx-auto p-4 relative z-10 pt-32">
         {/* Dashboard */}
         {view === 'dashboard' && (
           <div className="p-4 max-w-md mx-auto pb-32">
@@ -1724,27 +1727,45 @@ export default function App() {
                     )}
                   </div>
                 ))}
-                <div className="flex flex-col gap-2 pt-2">
-                  <input
-                    placeholder="Prize Name"
-                    className="w-full bg-slate-950 p-3 rounded-xl border border-white/10 text-sm text-white focus:border-purple-500 outline-none"
-                    value={newGrandPrize.name}
-                    onChange={e => setNewGrandPrize({ ...newGrandPrize, name: e.target.value })}
-                  />
-                  <input
-                    type="number"
-                    placeholder="#"
-                    className="w-full bg-slate-950 p-3 rounded-xl border border-white/10 text-sm text-white text-center focus:border-purple-500 outline-none"
-                    value={newGrandPrize.goal}
-                    onChange={e => setNewGrandPrize({ ...newGrandPrize, goal: parseInt(e.target.value) || 0 })}
-                  />
+                {!showPrizeForm && (
                   <button
-                    onClick={addGrandPrize}
-                    className="bg-purple-600 hover:bg-purple-500 text-white px-4 rounded-xl font-bold text-sm transition-colors shadow-lg shadow-purple-500/20"
+                    onClick={() => setShowPrizeForm(true)}
+                    className="w-full mt-4 bg-purple-600 hover:bg-purple-500 text-white font-bold py-4 rounded-xl shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2"
                   >
-                    Add
+                    <Plus size={20} />
+                    <span>Add New Prize</span>
                   </button>
-                </div>
+                )}
+
+                {showPrizeForm && (
+                  <div className="animate-in slide-in-from-bottom duration-300 bg-slate-950/50 p-4 rounded-2xl border border-white/5 mt-4">
+                    <div className="flex justify-between items-center mb-4">
+                      <h4 className="font-bold text-white">New Grand Prize</h4>
+                      <button onClick={() => setShowPrizeForm(false)} className="p-2 text-slate-400 hover:text-white bg-slate-800 rounded-full"><X size={16} /></button>
+                    </div>
+                    <div className="flex flex-col gap-2">
+                      <input
+                        placeholder="Prize Name"
+                        className="w-full bg-slate-900 p-3 rounded-xl border border-white/10 text-sm text-white focus:border-purple-500 outline-none"
+                        value={newGrandPrize.name}
+                        onChange={e => setNewGrandPrize({ ...newGrandPrize, name: e.target.value })}
+                      />
+                      <input
+                        type="number"
+                        placeholder="Points Goal"
+                        className="w-full bg-slate-900 p-3 rounded-xl border border-white/10 text-sm text-white text-center focus:border-purple-500 outline-none"
+                        value={newGrandPrize.goal}
+                        onChange={e => setNewGrandPrize({ ...newGrandPrize, goal: parseInt(e.target.value) || 0 })}
+                      />
+                      <button
+                        onClick={addGrandPrize}
+                        className="w-full bg-purple-600 hover:bg-purple-500 text-white font-bold py-3 rounded-xl shadow-lg mt-2"
+                      >
+                        Add Prize
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
