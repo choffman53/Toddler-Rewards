@@ -1222,9 +1222,15 @@ export default function App() {
 
 
   const updateGrandPrize = (prizeId: string, updates: any) => {
-    const updated = (settings.grandPrizes || []).map((x: any) => x.id === prizeId ? { ...x, ...updates } : x);
-    if (db && familyId) setDoc(doc(db, 'families', familyId, 'config', 'main'), { ...settings, grandPrizes: updated });
-    setSettings({ ...settings, grandPrizes: updated });
+    try {
+      const safeUpdates = JSON.parse(JSON.stringify(updates)); // Remove undefined
+      const updated = (settings.grandPrizes || []).map((x: any) => x.id === prizeId ? { ...x, ...safeUpdates } : x);
+      if (db && familyId) setDoc(doc(db, 'families', familyId, 'config', 'main'), { ...settings, grandPrizes: updated }).catch(e => console.error("Firestore save failed:", e));
+      setSettings({ ...settings, grandPrizes: updated });
+    } catch (e) {
+      console.error("updateGrandPrize failed:", e);
+      alert("Update failed: " + (e as any).message);
+    }
   };
 
   const toggleFeature = (prizeId: string) => {
@@ -1679,19 +1685,11 @@ export default function App() {
                             <button
                               onClick={() => handleGenerateImage(editingGrandPrize.name, true)}
                               disabled={_loading}
-                              className={`absolute inset-0 flex items-center justify-center bg-black/60 font-bold text-white gap-2 transition-all ${_loading ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
+                              className={`absolute inset-0 flex items-center justify-center bg-black/30 hover:bg-black/60 font-bold text-white gap-2 transition-all opacity-100`}
                             >
                               {_loading ? <Loader2 size={24} className="animate-spin text-purple-400" /> : <ImageIcon size={20} />}
                               {_loading ? 'Generating...' : 'Regenerate Image'}
                             </button>
-                            {!editingGrandPrize.imageUrl && !_loading && (
-                              <button
-                                onClick={() => handleGenerateImage(editingGrandPrize.name, true)}
-                                className="absolute inset-0 flex items-center justify-center font-bold text-purple-400 gap-2"
-                              >
-                                <Sparkles size={20} /> Generate Image
-                              </button>
-                            )}
                           </div>
 
                           <div className="flex items-center justify-between bg-slate-900 p-3 rounded-xl border border-white/10">
@@ -1852,19 +1850,11 @@ export default function App() {
                         <button
                           onClick={() => handleGenerateImage(newGrandPrize.name, false)}
                           disabled={_loading}
-                          className={`absolute inset-0 flex items-center justify-center bg-black/60 font-bold text-white gap-2 transition-all ${_loading ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
+                          className={`absolute inset-0 flex items-center justify-center bg-black/30 hover:bg-black/60 font-bold text-white gap-2 transition-all opacity-100`}
                         >
                           {_loading ? <Loader2 size={24} className="animate-spin text-purple-400" /> : <ImageIcon size={20} />}
                           {_loading ? 'Generating...' : 'Regenerate Image'}
                         </button>
-                        {!newGrandPrize.imageUrl && !_loading && (
-                          <button
-                            onClick={() => handleGenerateImage(newGrandPrize.name, false)}
-                            className="absolute inset-0 flex items-center justify-center font-bold text-purple-400 gap-2"
-                          >
-                            <Sparkles size={20} /> Generate Image
-                          </button>
-                        )}
                       </div>
 
                       <div className="flex items-center justify-between bg-slate-900 p-3 rounded-xl border border-white/10">
@@ -1938,20 +1928,22 @@ export default function App() {
 
       </div>
       {/* Flying Stars Overlay */}
-      {flyingStars.map(star => (
-        <div
-          key={star.id}
-          className="flying-star"
-          style={{
-            '--start-x': `${star.x}px`,
-            '--start-y': `${star.y}px`,
-            '--target-x': `${star.targetX}px`,
-            '--target-y': `${star.targetY}px`
-          } as React.CSSProperties}
-        >
-          <Star size={32} fill="#FACC15" className="text-yellow-400 drop-shadow-[0_0_10px_rgba(250,204,21,0.8)]" />
-        </div>
-      ))}
+      {
+        flyingStars.map(star => (
+          <div
+            key={star.id}
+            className="flying-star"
+            style={{
+              '--start-x': `${star.x}px`,
+              '--start-y': `${star.y}px`,
+              '--target-x': `${star.targetX}px`,
+              '--target-y': `${star.targetY}px`
+            } as React.CSSProperties}
+          >
+            <Star size={32} fill="#FACC15" className="text-yellow-400 drop-shadow-[0_0_10px_rgba(250,204,21,0.8)]" />
+          </div>
+        ))
+      }
 
       {/* Global Confetti System */}
       <ConfettiSystem ref={confettiRef} />
